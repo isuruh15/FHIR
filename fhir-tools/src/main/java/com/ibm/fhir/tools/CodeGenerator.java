@@ -22,6 +22,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -59,57 +62,57 @@ public class CodeGenerator {
     private final Map<String, String> superClassMap = new HashMap<>();
     private final Map<String, JsonObject> modifierExtensionDefinitionMap = new HashMap<>();
     private static final List<String> DATA_TYPE_NAMES = Arrays.asList(
-        "Base64Binary",
-        "Boolean",
-        "Canonical",
-        "Code",
-        "Date",
-        "DateTime",
-        "Decimal",
-        "Id",
-        "Instant",
-        "Integer",
-        "Markdown",
-        "Oid",
-        "PositiveInt",
-        "String",
-        "Time",
-        "UnsignedInt",
-        "Uri",
-        "Url",
-        "Uuid",
-        "Address",
-        "Age",
-        "Annotation",
-        "Attachment",
-        "CodeableConcept",
-        "Coding",
-        "ContactPoint",
-        "Count",
-        "Distance",
-        "Duration",
-        "HumanName",
-        "Identifier",
-        "Money",
-        "MoneyQuantity", // profiled type
-        "Period",
-        "Quantity",
-        "Range",
-        "Ratio",
-        "Reference",
-        "SampledData",
-        "SimpleQuantity", // profiled type
-        "Signature",
-        "Timing",
-        "ContactDetail",
-        "Contributor",
-        "DataRequirement",
-        "Expression",
-        "ParameterDefinition",
-        "RelatedArtifact",
-        "TriggerDefinition",
-        "UsageContext",
-        "Dosage");
+            "Base64Binary",
+            "Boolean",
+            "Canonical",
+            "Code",
+            "Date",
+            "DateTime",
+            "Decimal",
+            "Id",
+            "Instant",
+            "Integer",
+            "Markdown",
+            "Oid",
+            "PositiveInt",
+            "String",
+            "Time",
+            "UnsignedInt",
+            "Uri",
+            "Url",
+            "Uuid",
+            "Address",
+            "Age",
+            "Annotation",
+            "Attachment",
+            "CodeableConcept",
+            "Coding",
+            "ContactPoint",
+            "Count",
+            "Distance",
+            "Duration",
+            "HumanName",
+            "Identifier",
+            "Money",
+            "MoneyQuantity", // profiled type
+            "Period",
+            "Quantity",
+            "Range",
+            "Ratio",
+            "Reference",
+            "SampledData",
+            "SimpleQuantity", // profiled type
+            "Signature",
+            "Timing",
+            "ContactDetail",
+            "Contributor",
+            "DataRequirement",
+            "Expression",
+            "ParameterDefinition",
+            "RelatedArtifact",
+            "TriggerDefinition",
+            "UsageContext",
+            "Dosage");
     private static final List<String> PROFILED_TYPES = Arrays.asList("SimpleQuantity", "MoneyQuantity");
     private static final List<String> MODEL_CHECKED_CONSTRAINTS = Arrays.asList("ele-1", "sqty-1");
     private static final List<String> HEADER = readHeader();
@@ -148,12 +151,12 @@ public class CodeGenerator {
                 .add("min", 0)
                 .add("max", "*")
                 .add("base", Json.createObjectBuilder()
-                    .add("path", "BackboneElement.modifierExtension")
-                    .add("min", 0)
-                    .add("max", "*"))
+                        .add("path", "BackboneElement.modifierExtension")
+                        .add("min", 0)
+                        .add("max", "*"))
                 .add("type", Json.createArrayBuilder()
-                    .add(Json.createObjectBuilder()
-                        .add("code", "Extension")))
+                        .add(Json.createObjectBuilder()
+                                .add("code", "Extension")))
                 .build();
     }
 
@@ -163,13 +166,13 @@ public class CodeGenerator {
             elementIndex = elementName + "ElementIndex++";
         }
         if (isPrimitiveType(fieldType) && !isPrimitiveSubtype(fieldType)) {
-            return "parse" + fieldType + "(" + quote(elementName) + ", reader, " + elementIndex +")";
+            return "parse" + fieldType + "(" + quote(elementName) + ", reader, " + elementIndex + ")";
         } else if (isStringSubtype(fieldType) || isCodeSubtype(fieldType)) {
-            return "(" + fieldType + ") " + "parseString(" + fieldType + ".builder(), "+ quote(elementName) + ", reader, " + elementIndex + ")";
+            return "(" + fieldType + ") " + "parseString(" + fieldType + ".builder(), " + quote(elementName) + ", reader, " + elementIndex + ")";
         } else if (isUriSubtype(fieldType)) {
-            return "(" + fieldType + ") " + "parseUri(" + fieldType + ".builder(), "+ quote(elementName) + ", reader, " + elementIndex + ")";
+            return "(" + fieldType + ") " + "parseUri(" + fieldType + ".builder(), " + quote(elementName) + ", reader, " + elementIndex + ")";
         } else if (isIntegerSubtype(fieldType)) {
-            return "(" + fieldType + ") " + "parseInteger(" + fieldType + ".builder(), "+ quote(elementName) + ", reader, " + elementIndex + ")";
+            return "(" + fieldType + ") " + "parseInteger(" + fieldType + ".builder(), " + quote(elementName) + ", reader, " + elementIndex + ")";
         } else if (isQuantitySubtype(fieldType)) {
             return "(" + fieldType + ") parseQuantity(" + fieldType + ".builder(), " + quote(elementName) + ", reader, " + elementIndex + ")";
         } else if (isJavaString(fieldType)) {
@@ -184,11 +187,11 @@ public class CodeGenerator {
             if (isPrimitiveType(fieldType) && !isPrimitiveSubtype(fieldType)) {
                 return "parse" + fieldType + "(" + quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
             } else if (isStringSubtype(fieldType) || isCodeSubtype(fieldType)) {
-                return "(" + fieldType + ") parseString(" + fieldType + ".builder(), "+ quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
+                return "(" + fieldType + ") parseString(" + fieldType + ".builder(), " + quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
             } else if (isUriSubtype(fieldType)) {
-                return "(" + fieldType + ") parseUri(" + fieldType + ".builder(), "+ quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
+                return "(" + fieldType + ") parseUri(" + fieldType + ".builder(), " + quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
             } else if (isIntegerSubtype(fieldType)) {
-                return "(" + fieldType + ") parseInteger(" + fieldType + ".builder(), "+ quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
+                return "(" + fieldType + ") parseInteger(" + fieldType + ".builder(), " + quote(elementName) + ", " + elementName + "Array.get(i), getJsonValue(_" + elementName + "Array, i), i)";
             } else if (isQuantitySubtype(fieldType)) {
                 return "(" + fieldType + ") parseQuantity(" + fieldType + ".builder(), " + quote(elementName) + ", " + elementName + "Array.getJsonObject(i), i)";
             } else {
@@ -200,13 +203,13 @@ public class CodeGenerator {
                 return "parse" + fieldType + "(" + quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
             } else if (isStringSubtype(fieldType) || isCodeSubtype(fieldType)) {
                 String expectedType = getExpectedType(fieldType);
-                return "(" + fieldType + ") " + "parseString(" + fieldType + ".builder(), "+ quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
+                return "(" + fieldType + ") " + "parseString(" + fieldType + ".builder(), " + quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
             } else if (isUriSubtype(fieldType)) {
                 String expectedType = getExpectedType(fieldType);
-                return "(" + fieldType + ") " + "parseUri(" + fieldType + ".builder(), "+ quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
+                return "(" + fieldType + ") " + "parseUri(" + fieldType + ".builder(), " + quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
             } else if (isIntegerSubtype(fieldType)) {
                 String expectedType = getExpectedType(fieldType);
-                return "(" + fieldType + ") " + "parseInteger(" + fieldType + ".builder(), "+ quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
+                return "(" + fieldType + ") " + "parseInteger(" + fieldType + ".builder(), " + quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", " + expectedType + ".class), jsonObject.get(" + quote("_" + elementName) + "), -1)";
             } else if (isQuantitySubtype(fieldType)) {
                 return "(" + fieldType + ") parseQuantity(" + fieldType + ".builder(), " + quote(elementName) + ", getJsonValue(jsonObject, " + quote(elementName) + ", JsonObject.class), -1)";
             } else if (isChoiceElement(elementDefinition)) {
@@ -326,14 +329,14 @@ public class CodeGenerator {
         cb.javadoc("visit the children of the Resource or Element being visited.");
         cb.javadoc("");
         cb.javadoc("Subclasses can override the default behavior in a number of places, including:");
-        cb.javadoc("<ul>",false);
-        cb.javadoc("<li>preVisit methods to control whether a given Resource or Element gets visited",false);
-        cb.javadoc("<li>visitStart methods to provide setup behavior prior to the visit",false);
-        cb.javadoc("<li>supertype visit methods to perform some common action on all visited Resources and Elements",false);
-        cb.javadoc("<li>subtype visit methods to perform unique behavior that varies by the type being visited",false);
-        cb.javadoc("<li>visitEnd methods to provide initial cleanup behavior after a Resource or Element has been visited",false);
-        cb.javadoc("<li>postVisit methods to provide final cleanup behavior after a Resource or Element has been visited",false);
-        cb.javadoc("</ul>",false);
+        cb.javadoc("<ul>", false);
+        cb.javadoc("<li>preVisit methods to control whether a given Resource or Element gets visited", false);
+        cb.javadoc("<li>visitStart methods to provide setup behavior prior to the visit", false);
+        cb.javadoc("<li>supertype visit methods to perform some common action on all visited Resources and Elements", false);
+        cb.javadoc("<li>subtype visit methods to perform unique behavior that varies by the type being visited", false);
+        cb.javadoc("<li>visitEnd methods to provide initial cleanup behavior after a Resource or Element has been visited", false);
+        cb.javadoc("<li>postVisit methods to provide final cleanup behavior after a Resource or Element has been visited", false);
+        cb.javadoc("</ul>", false);
         cb.javadocEnd();
         cb.annotation("Generated", quote("com.ibm.fhir.tools.CodeGenerator"));
         cb._class(mods("public"), "DefaultVisitor", null, implementsInterfaces("Visitor"));
@@ -352,8 +355,8 @@ public class CodeGenerator {
 
         cb.javadocStart();
         cb.javadocParam("visitChildren", "Whether to visit children of a Resource or Element by default. " +
-                        "Note that subclasses may override the visit methods and/or the defaultAction methods " +
-                        "and decide whether to use the passed boolean or not.");
+                "Note that subclasses may override the visit methods and/or the defaultAction methods " +
+                "and decide whether to use the passed boolean or not.");
         cb.javadocEnd();
         cb.constructor(mods("public"), "DefaultVisitor", params("boolean visitChildren"));
         cb.assign(_this("visitChildren"), "visitChildren");
@@ -550,8 +553,8 @@ public class CodeGenerator {
         }
 
         cb.constructor(mods(visibility), "Builder")
-            ._super()
-        .end().newLine();
+                ._super()
+                .end().newLine();
 
         List<String> requiredElementNames = new ArrayList<>();
 
@@ -570,7 +573,7 @@ public class CodeGenerator {
                 if (!declaredBy) {
                     cb.override();
                 }
-                cb.method(mods("public"), "Builder", fieldName, params(param(fieldType.replace("java.util.", "").replace("List<", "").replace(">",  "..."), fieldName)));
+                cb.method(mods("public"), "Builder", fieldName, params(param(fieldType.replace("java.util.", "").replace("List<", "").replace(">", "..."), fieldName)));
                 if (declaredBy) {
                     String varName = "value";
                     if ("value".equals(fieldName)) {
@@ -578,9 +581,9 @@ public class CodeGenerator {
                     }
                     String varType = fieldType.replace("java.util.", "").replace("List<", "").replace(">", "");
                     cb._foreach(varType + " " + varName, fieldName)
-                        .invoke(_this(fieldName), "add", args(varName))
-                    ._end()
-                    ._return("this");
+                            .invoke(_this(fieldName), "add", args(varName))
+                            ._end()
+                            ._return("this");
                 } else {
                     cb._return("(Builder) super." + fieldName + "(" + fieldName + ")");
                 }
@@ -629,40 +632,40 @@ public class CodeGenerator {
 
         if (isBase64Binary(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .invoke("Objects.requireNonNull", args("value"))
-                .assign("java.lang.String valueNoWhitespace", "value.replaceAll(\"\\\\s\", \"\")")
-                .invoke("ValidationSupport.validateBase64EncodedString", args("valueNoWhitespace"))
-                .assign("this.value", "Base64.getDecoder().decode(valueNoWhitespace)")
-                ._return("this")
-            .end().newLine();
+                    .invoke("Objects.requireNonNull", args("value"))
+                    .assign("java.lang.String valueNoWhitespace", "value.replaceAll(\"\\\\s\", \"\")")
+                    .invoke("ValidationSupport.validateBase64EncodedString", args("valueNoWhitespace"))
+                    .assign("this.value", "Base64.getDecoder().decode(valueNoWhitespace)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isDateTime(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .assign("this.value", "PARSER_FORMATTER.parseBest(value, ZonedDateTime::from, LocalDate::from, YearMonth::from, Year::from)")
-                ._return("this")
-            .end().newLine();
+                    .assign("this.value", "PARSER_FORMATTER.parseBest(value, ZonedDateTime::from, LocalDate::from, YearMonth::from, Year::from)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isDate(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .assign("this.value", "PARSER_FORMATTER.parseBest(value, LocalDate::from, YearMonth::from, Year::from)")
-                ._return("this")
-            .end().newLine();
+                    .assign("this.value", "PARSER_FORMATTER.parseBest(value, LocalDate::from, YearMonth::from, Year::from)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isInstant(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .assign("this.value", "PARSER_FORMATTER.parse(value, ZonedDateTime::from)")
-                ._return("this")
-            .end().newLine();
+                    .assign("this.value", "PARSER_FORMATTER.parse(value, ZonedDateTime::from)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isTime(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .assign("this.value", "PARSER_FORMATTER.parse(value, LocalTime::from)")
-                ._return("this")
-            .end().newLine();
+                    .assign("this.value", "PARSER_FORMATTER.parse(value, LocalTime::from)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isInteger(structureDefinition) || isIntegerSubtype(structureDefinition)) {
@@ -678,16 +681,16 @@ public class CodeGenerator {
 
         if (isBoolean(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .assign("this.value", "java.lang.Boolean.parseBoolean(value)")
-                ._return("this")
-            .end().newLine();
+                    .assign("this.value", "java.lang.Boolean.parseBoolean(value)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isDecimal(structureDefinition)) {
             cb.method(mods("public"), "Builder", "value", params("java.lang.String value"))
-                .assign("this.value", "new BigDecimal(value)")
-                ._return("this")
-            .end().newLine();
+                    .assign("this.value", "new BigDecimal(value)")
+                    ._return("this")
+                    .end().newLine();
         }
 
         if (isAbstract(structureDefinition)) {
@@ -712,8 +715,8 @@ public class CodeGenerator {
             cb.javadocEnd();
             cb.override();
             cb.method(mods("public"), className, "build")
-                ._return(_new(className, args("this")))
-            .end();
+                    ._return(_new(className, args("this")))
+                    .end();
         }
 
         String paramName = camelCase(className);
@@ -747,7 +750,7 @@ public class CodeGenerator {
     }
 
     /**
-     * @param className The name of the class currently being generated
+     * @param className         The name of the class currently being generated
      * @param elementDefinition
      * @return true if the element specified by the ElementDefintion is declared by the class being generated
      */
@@ -763,17 +766,17 @@ public class CodeGenerator {
         cb.javadoc(Arrays.asList(definition.split(System.lineSeparator())), false, false, true);
 
         switch (paramType) {
-        case "single":
-            // do nothing
-            break;
-        case "varargs":
-            cb.javadoc("");
-            cb.javadoc("<p>Adds new element(s) to the existing list", false);
-            break;
-        case "collection":
-            cb.javadoc("");
-            cb.javadoc("<p>Replaces the existing list with a new one containing elements from the Collection", false);
-            break;
+            case "single":
+                // do nothing
+                break;
+            case "varargs":
+                cb.javadoc("");
+                cb.javadoc("<p>Adds new element(s) to the existing list", false);
+                break;
+            case "collection":
+                cb.javadoc("");
+                cb.javadoc("<p>Replaces the existing list with a new one containing elements from the Collection", false);
+                break;
         }
         cb.javadoc("");
 
@@ -1062,7 +1065,7 @@ public class CodeGenerator {
 
             if (isCode(structureDefinition)) {
                 cb.invoke("ValidationSupport", "checkCode", args("value"));
-            } else if (isId(structureDefinition)){
+            } else if (isId(structureDefinition)) {
                 cb.invoke("ValidationSupport", "checkId", args("value"));
             } else if (isStringSubtype(structureDefinition)) {
                 if (!STRING_PATTERN.equals(getPattern(structureDefinition))) {
@@ -1193,11 +1196,11 @@ public class CodeGenerator {
 
                 cb.override();
                 cb.method(mods("public"), "Builder", "toBuilder")
-                    ._return(_new("Builder") + ".from(this)")
-                .end().newLine();
+                        ._return(_new("Builder") + ".from(this)")
+                        .end().newLine();
 
                 cb.method(mods("public", "static"), "Builder", "builder");
-                    cb._return(_new("Builder"));
+                cb._return(_new("Builder"));
                 cb.end().newLine();
             }
 
@@ -1284,13 +1287,13 @@ public class CodeGenerator {
     private void generateToStringMethod(JsonObject structureDefinition, CodeBuilder cb) {
         if (isDateTime(structureDefinition) || isInstant(structureDefinition) || isDate(structureDefinition) || isTime(structureDefinition)) {
             cb.override()
-            .method(mods("public"), "java.lang.String", "toString")
-                ._if("value != null")
+                    .method(mods("public"), "java.lang.String", "toString")
+                    ._if("value != null")
                     ._return("PARSER_FORMATTER.format(value)")
-                ._end()
-                ._return("super.toString()")
-            .end()
-            .newLine();
+                    ._end()
+                    ._return("super.toString()")
+                    .end()
+                    .newLine();
         }
     }
 
@@ -1305,14 +1308,14 @@ public class CodeGenerator {
         cb.override();
         cb.method(mods("public"), "boolean", "equals", params("Object obj"));
         cb._if("this == obj")
-            ._return("true")
-        ._end();
+                ._return("true")
+                ._end();
         cb._if("obj == null")
-            ._return("false")
-        ._end();
+                ._return("false")
+                ._end();
         cb._if("getClass() != obj.getClass()")
-            ._return("false")
-        ._end();
+                ._return("false")
+                ._end();
         cb.assign(className + " other", "(" + className + ") obj");
         StringJoiner joiner = new StringJoiner(" && " + System.lineSeparator() + indent(level));
         for (JsonObject elementDefinition : elementDefinitions) {
@@ -1324,9 +1327,9 @@ public class CodeGenerator {
                 prefix = "this.";
             }
             if ("byte[]".equals(fieldType)) {
-                joiner.add("Arrays.equals(" + prefix + fieldName + ", other." + fieldName +")");
+                joiner.add("Arrays.equals(" + prefix + fieldName + ", other." + fieldName + ")");
             } else {
-                joiner.add("Objects.equals(" + prefix + fieldName + ", other." + fieldName +")");
+                joiner.add("Objects.equals(" + prefix + fieldName + ", other." + fieldName + ")");
             }
         }
         cb._return(joiner.toString());
@@ -1456,91 +1459,91 @@ public class CodeGenerator {
 
         if (isDate(structureDefinition) || isDateTime(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("TemporalAccessor value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isDateTime(structureDefinition)) {
             cb.method(mods("public", "static"), className, "now")
-                ._return(className + ".builder().value(ZonedDateTime.now()).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(ZonedDateTime.now()).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "now", params("ZoneOffset offset"))
-                ._return(className + ".builder().value(ZonedDateTime.now(offset)).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(ZonedDateTime.now(offset)).build()")
+                    .end().newLine();
         }
 
         if (isInstant(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("ZonedDateTime value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "now")
-                ._return(className + ".builder().value(ZonedDateTime.now()).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(ZonedDateTime.now()).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "now", params("ZoneOffset offset"))
-                ._return(className + ".builder().value(ZonedDateTime.now(offset)).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(ZonedDateTime.now(offset)).build()")
+                    .end().newLine();
         }
 
         if (isTime(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("LocalTime value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isBoolean(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("java.lang.Boolean value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isDecimal(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("BigDecimal value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("Number value"))
-                ._return(className + ".builder().value(value.toString()).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value.toString()).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isInteger(structureDefinition) || isIntegerSubtype(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("java.lang.Integer value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isString(structureDefinition) || isStringSubtype(structureDefinition) ||
                 isUri(structureDefinition) || isUriSubtype(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isCanonical(structureDefinition)) {
@@ -1550,59 +1553,59 @@ public class CodeGenerator {
 //            }
 //            return of(value.toString());
             cb.method(mods("public", "static"), className, "of", params("java.lang.String uri", "java.lang.String version"))
-                .assign("StringBuilder value", "new StringBuilder(uri)")
-                ._if("version != null && !version.isEmpty()")
+                    .assign("StringBuilder value", "new StringBuilder(uri)")
+                    ._if("version != null && !version.isEmpty()")
                     .invoke("value", "append", args("'|'"))
                     .invoke("value", "append", args("version"))
-                .end()
-                ._return(className + ".builder().value(value.toString()).build()")
-            .end().newLine();
+                    .end()
+                    ._return(className + ".builder().value(value.toString()).build()")
+                    .end().newLine();
 
             cb.method(mods("public", "static"), className, "of", params("java.lang.String uri", "java.lang.String version", "java.lang.String fragment"))
-                .assign("StringBuilder value", "new StringBuilder(uri)")
-                ._if("version != null && !version.isEmpty()")
+                    .assign("StringBuilder value", "new StringBuilder(uri)")
+                    ._if("version != null && !version.isEmpty()")
                     .invoke("value", "append", args("'|'"))
                     .invoke("value", "append", args("version"))
-                .end()
-                ._if("fragment != null && !fragment.isEmpty()")
+                    .end()
+                    ._if("fragment != null && !fragment.isEmpty()")
                     .invoke("value", "append", args("'#'"))
                     .invoke("value", "append", args("fragment"))
-                .end()
-            ._return(className + ".builder().value(value.toString()).build()")
-        .end().newLine();
+                    .end()
+                    ._return(className + ".builder().value(value.toString()).build()")
+                    .end().newLine();
         }
 
         if (isString(structureDefinition) || isStringSubtype(structureDefinition)) {
             cb.method(mods("public", "static"), "String", "string", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isUri(structureDefinition) || isUriSubtype(structureDefinition)) {
             cb.method(mods("public", "static"), "Uri", "uri", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isInteger(structureDefinition) || isIntegerSubtype(structureDefinition)) {
             cb.method(mods("public", "static"), "Integer", "integer", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isCode(structureDefinition)) {
             cb.method(mods("public", "static"), "Code", "code", params("java.lang.String value"))
-                ._return("Code.builder().value(value).build()")
-            .end().newLine();
+                    ._return("Code.builder().value(value).build()")
+                    .end().newLine();
         }
 
         if (isXhtml(structureDefinition)) {
             cb.method(mods("public", "static"), className, "of", params("java.lang.String value"))
-                ._return(className + ".builder().value(value).build()")
-            .end().newLine();
+                    ._return(className + ".builder().value(value).build()")
+                    .end().newLine();
             cb.method(mods("public", "static"), "Xhtml", "xhtml", params("java.lang.String value"))
-                ._return("Xhtml.builder().value(value).build()")
-            .end().newLine();
+                    ._return("Xhtml.builder().value(value).build()")
+                    .end().newLine();
         }
     }
 
@@ -1766,7 +1769,7 @@ public class CodeGenerator {
                 isDate(structureDefinition) ||
                 isDateTime(structureDefinition)) {
             imports.add("com.ibm.fhir.model.util.ValidationSupport");
-        } else if (isStringSubtype(structureDefinition)){
+        } else if (isStringSubtype(structureDefinition)) {
             // only add the Pattern import if the pattern differs from the base String pattern
             if (!STRING_PATTERN.equals(getPattern(structureDefinition))) {
                 imports.add("com.ibm.fhir.model.util.ValidationSupport");
@@ -1842,27 +1845,27 @@ public class CodeGenerator {
         String name = structureDefinition.getString("name");
         if ("Resource".equals(name)) {
             cb.method(mods("public"), "<T extends Resource> boolean", "is", params("Class<T> resourceType"))
-                ._return("resourceType.isInstance(this)")
-            .end().newLine();
+                    ._return("resourceType.isInstance(this)")
+                    .end().newLine();
 
             cb.javadocStart()
-                .javadocThrows("ClassCastException", "when this resources cannot be cast to the requested resourceType")
-                .javadocEnd();
+                    .javadocThrows("ClassCastException", "when this resources cannot be cast to the requested resourceType")
+                    .javadocEnd();
             cb.method(mods("public"), "<T extends Resource> T", "as", params("Class<T> resourceType"))
-                ._return("resourceType.cast(this)")
-            .end().newLine();
+                    ._return("resourceType.cast(this)")
+                    .end().newLine();
         }
         if ("Element".equals(name)) {
             cb.method(mods("public"), "<T extends Element> boolean", "is", params("Class<T> elementType"))
-                ._return("elementType.isInstance(this)")
-            .end().newLine();
+                    ._return("elementType.isInstance(this)")
+                    .end().newLine();
 
             cb.javadocStart()
-                .javadocThrows("ClassCastException", "when this element cannot be cast to the requested elementType")
-                .javadocEnd();
+                    .javadocThrows("ClassCastException", "when this element cannot be cast to the requested elementType")
+                    .javadocEnd();
             cb.method(mods("public"), "<T extends Element> T", "as", params("Class<T> elementType"))
-                ._return("elementType.cast(this)")
-            .end().newLine();
+                    ._return("elementType.cast(this)")
+                    .end().newLine();
         }
     }
 
@@ -1890,8 +1893,8 @@ public class CodeGenerator {
 
     private void generateHasChildrenMethod(JsonObject structureDefinition, String path, CodeBuilder cb, boolean nested) {
         if (isStringSubtype(structureDefinition) ||
-            isUriSubtype(structureDefinition) ||
-            isQuantitySubtype(structureDefinition)) {
+                isUriSubtype(structureDefinition) ||
+                isQuantitySubtype(structureDefinition)) {
             return;
         }
 
@@ -2010,53 +2013,53 @@ public class CodeGenerator {
         cb.annotation("SuppressWarnings", quote("unchecked"));
         cb.override();
         cb.method(mods("public"), "<T extends Resource> T", "parse", params("InputStream in"), throwsExceptions("FHIRParserException"))
-            ._try("StreamReaderDelegate delegate = createStreamReaderDelegate(in)")
+                ._try("StreamReaderDelegate delegate = createStreamReaderDelegate(in)")
                 .invoke("reset", args())
                 ._while("delegate.hasNext()")
-                    .assign("int eventType", "delegate.next()")
-                    ._switch("eventType")
-                    ._case("XMLStreamReader.START_ELEMENT")
-                        .invoke("requireNamespace", args("delegate", "FHIR_NS_URI"))
-                        ._return("(T) parseResource(getResourceType(delegate), delegate, -1)")
-                    ._end()
+                .assign("int eventType", "delegate.next()")
+                ._switch("eventType")
+                ._case("XMLStreamReader.START_ELEMENT")
+                .invoke("requireNamespace", args("delegate", "FHIR_NS_URI"))
+                ._return("(T) parseResource(getResourceType(delegate), delegate, -1)")
+                ._end()
                 ._end()
                 ._throw(_new("XMLStreamException", args(quote("Unexpected end of stream"))))
-            ._catch("Exception e")
+                ._catch("Exception e")
                 ._throw(_new("FHIRParserException", args("e.getMessage()", "getPath()", "e")))
-            ._end()
-        .end();
+                ._end()
+                .end();
         cb.newLine();
 
         // public <T extends Resource> T parse(Reader reader) throws FHIRParserException
         cb.annotation("SuppressWarnings", quote("unchecked"));
         cb.override();
         cb.method(mods("public"), "<T extends Resource> T", "parse", params("Reader reader"), throwsExceptions("FHIRParserException"))
-            ._try("StreamReaderDelegate delegate = createStreamReaderDelegate(reader)")
+                ._try("StreamReaderDelegate delegate = createStreamReaderDelegate(reader)")
                 .invoke("reset", args())
                 ._while("delegate.hasNext()")
-                    .assign("int eventType", "delegate.next()")
-                    ._switch("eventType")
-                    ._case("XMLStreamReader.START_ELEMENT")
-                        .invoke("requireNamespace", args("delegate", "FHIR_NS_URI"))
-                        ._return("(T) parseResource(getResourceType(delegate), delegate, -1)")
-                    ._end()
+                .assign("int eventType", "delegate.next()")
+                ._switch("eventType")
+                ._case("XMLStreamReader.START_ELEMENT")
+                .invoke("requireNamespace", args("delegate", "FHIR_NS_URI"))
+                ._return("(T) parseResource(getResourceType(delegate), delegate, -1)")
+                ._end()
                 ._end()
                 ._throw(_new("XMLStreamException", args(quote("Unexpected end of stream"))))
-            ._catch("Exception e")
+                ._catch("Exception e")
                 ._throw(_new("FHIRParserException", args("e.getMessage()", "getPath()", "e")))
-            ._end()
-        .end();
+                ._end()
+                .end();
         cb.newLine();
 
         cb.method(mods("private"), "void", "reset")
-            .invoke("stack", "clear", args())
-        .end();
+                .invoke("stack", "clear", args())
+                .end();
         cb.newLine();
 
         cb.method(mods("private"), "Resource", "parseResource", params("java.lang.String elementName", "XMLStreamReader reader", "int elementIndex"), throwsExceptions("XMLStreamException"));
         cb._if("isResourceContainer(elementName)")
-            .invoke("reader", "nextTag", args())
-        ._end();
+                .invoke("reader", "nextTag", args())
+                ._end();
         cb.assign("java.lang.String resourceType", "getResourceType(reader)");
         cb._switch("resourceType");
         for (String resourceClassName : resourceClassNames) {
@@ -2079,62 +2082,62 @@ public class CodeGenerator {
         }
 
         cb.method(mods("private"), "void", "stackPush", params("java.lang.String elementName", "int elementIndex"))
-            ._if("elementIndex != -1")
+                ._if("elementIndex != -1")
                 .invoke("stack", "push", args("elementName + \"[\" + elementIndex + \"]\""))
-            ._else()
+                ._else()
                 .invoke("stack", "push", args("elementName"))
-            ._end()
-            ._if("DEBUG")
+                ._end()
+                ._if("DEBUG")
                 .invoke("System.out", "println", args("getPath()"))
-            ._end()
-        .end().newLine();
+                ._end()
+                .end().newLine();
 
         cb.method(mods("private"), "void", "stackPop")
-            .invoke("stack", "pop", args())
-        .end().newLine();
+                .invoke("stack", "pop", args())
+                .end().newLine();
 
         cb.method(mods("private"), "java.lang.String", "getPath")
-            .assign("StringJoiner joiner", "new StringJoiner(\".\")")
-            ._foreach("java.lang.String s", "stack")
+                .assign("StringJoiner joiner", "new StringJoiner(\".\")")
+                ._foreach("java.lang.String s", "stack")
                 .invoke("joiner", "add", args("s"))
-            ._end()
-            ._return("joiner.toString()")
-        .end().newLine();
+                ._end()
+                ._return("joiner.toString()")
+                .end().newLine();
 
         cb.method(mods("private"), "java.lang.String", "parseJavaString", params("java.lang.String elementName", "XMLStreamReader reader", "int elementIndex"),
                 throwsExceptions("XMLStreamException"))
-            .invoke("stackPush", args("elementName", "elementIndex"))
-            .assign("java.lang.String javaString", "reader.getAttributeValue(null, \"value\")")
-            ._while("reader.hasNext()")
+                .invoke("stackPush", args("elementName", "elementIndex"))
+                .assign("java.lang.String javaString", "reader.getAttributeValue(null, \"value\")")
+                ._while("reader.hasNext()")
                 .assign("int eventType", "reader.next()")
                 ._switch("eventType")
 
                 ._case("XMLStreamReader.START_ELEMENT")
-                    .assign("java.lang.String localName", "reader.getLocalName()")
-                    ._throw(_new("IllegalArgumentException", args("\"Unrecognized element: '\" + localName + \"'\"")))
+                .assign("java.lang.String localName", "reader.getLocalName()")
+                ._throw(_new("IllegalArgumentException", args("\"Unrecognized element: '\" + localName + \"'\"")))
 
                 ._case("XMLStreamReader.END_ELEMENT")
-                    ._if("reader.getLocalName().equals(elementName)")
-                        .invoke("stackPop", args())
-                        ._return("javaString")
-                    ._end()
-                    ._break()
+                ._if("reader.getLocalName().equals(elementName)")
+                .invoke("stackPop", args())
+                ._return("javaString")
+                ._end()
+                ._break()
                 ._end()
 
-            ._end()
-            ._throw(_new("XMLStreamException", args(quote("Unexpected end of stream"))))
-        .end()
-        .newLine();
+                ._end()
+                ._throw(_new("XMLStreamException", args(quote("Unexpected end of stream"))))
+                .end()
+                .newLine();
 
         cb.method(mods("private"), "java.lang.String", "getResourceType", params("XMLStreamReader reader"), throwsExceptions("XMLStreamException"))
-            .assign("java.lang.String resourceType", "reader.getLocalName()")
-            ._try()
+                .assign("java.lang.String resourceType", "reader.getLocalName()")
+                ._try()
                 .invoke("ResourceType.ValueSet", "from", args("resourceType"))
-            ._catch("IllegalArgumentException e")
+                ._catch("IllegalArgumentException e")
                 ._throw("new IllegalArgumentException(\"Invalid resource type: '\" + resourceType + \"'\")")
-            ._end()
-            ._return("resourceType")
-        .end();
+                ._end()
+                ._return("resourceType")
+                .end();
 
         cb._end();
 
@@ -2190,16 +2193,16 @@ public class CodeGenerator {
 
         if (typeClassNames.contains(generatedClassName) || generatedClassName.contains(".")) {
             cb.assign("java.lang.String id", "reader.getAttributeValue(null, \"id\")")
-            ._if("id != null")
-                .invoke("builder", "id", args("id"))
-            ._end();
+                    ._if("id != null")
+                    .invoke("builder", "id", args("id"))
+                    ._end();
         }
 
         if ("Extension".equals(generatedClassName)) {
             cb.assign("java.lang.String url", "reader.getAttributeValue(null, \"url\")")
-            ._if("url != null")
-                .invoke("builder", "url", args("url"))
-            ._end();
+                    ._if("url != null")
+                    .invoke("builder", "url", args("url"))
+                    ._end();
         }
 
         if (isPrimitiveType(structureDefinition)) {
@@ -2212,9 +2215,9 @@ public class CodeGenerator {
                 return;
             } else {
                 cb.assign("java.lang.String value", "reader.getAttributeValue(null, \"value\")")
-                ._if("value != null")
-                    .invoke("builder", "value", args("value"))
-                ._end();
+                        ._if("value != null")
+                        .invoke("builder", "value", args("value"))
+                        ._end();
             }
         }
 
@@ -2232,10 +2235,10 @@ public class CodeGenerator {
         // check namespace
         if ("Narrative".equals(generatedClassName)) {
             cb._if("\"div\".equals(localName)")
-                .invoke("requireNamespace", args("reader", "XHTML_NS_URI"))
-            ._else()
-                .invoke("requireNamespace", args("reader", "FHIR_NS_URI"))
-            ._end();
+                    .invoke("requireNamespace", args("reader", "XHTML_NS_URI"))
+                    ._else()
+                    .invoke("requireNamespace", args("reader", "FHIR_NS_URI"))
+                    ._end();
         } else {
             cb.invoke("requireNamespace", args("reader", "FHIR_NS_URI"));
         }
@@ -2287,18 +2290,18 @@ public class CodeGenerator {
         }
 
         cb._default()
-            ._throw(_new("IllegalArgumentException", args("\"Unrecognized element: '\" + localName + \"'\"")));
+                ._throw(_new("IllegalArgumentException", args("\"Unrecognized element: '\" + localName + \"'\"")));
 
         cb._end();
 
         cb._break();
 
         cb._case("XMLStreamReader.END_ELEMENT")
-            ._if("reader.getLocalName().equals(elementName)")
+                ._if("reader.getLocalName().equals(elementName)")
                 .invoke("stackPop", args())
                 ._return("builder.build()")
-            ._end()
-            ._break();
+                ._end()
+                ._break();
 
         cb._end();
 
@@ -2317,8 +2320,8 @@ public class CodeGenerator {
 
         if ("String".equals(generatedClassName) || "Uri".equals(generatedClassName) || "Integer".equals(generatedClassName)) {
             cb.method(mods("private"), generatedClassName, "parse" + generatedClassName, params("java.lang.String elementName", "XMLStreamReader reader", "int elementIndex"), throwsExceptions("XMLStreamException"))
-                ._return("parse" + generatedClassName + "(" + generatedClassName + ".builder(), elementName, reader, elementIndex)")
-            .end().newLine();
+                    ._return("parse" + generatedClassName + "(" + generatedClassName + ".builder(), elementName, reader, elementIndex)")
+                    .end().newLine();
         }
     }
 
@@ -2410,77 +2413,77 @@ public class CodeGenerator {
         // public <T extends Resource> T parse(InputStream in) throws FHIRException
         cb.override();
         cb.method(mods("public"), "<T extends Resource> T", "parse", params("InputStream in"), throwsExceptions("FHIRParserException"))
-            ._return("parseAndFilter(in, null)")
-        .end();
+                ._return("parseAndFilter(in, null)")
+                .end();
         cb.newLine();
 
         // public <T extends Resource> T parseAndFilter(InputStream in, java.util.List<java.lang.String> elementsToInclude) throws FHIRException
         cb.method(mods("public"), "<T extends Resource> T", "parseAndFilter", params("InputStream in", "Collection<java.lang.String> elementsToInclude"), throwsExceptions("FHIRParserException"))
-            ._try("JsonReader jsonReader = JSON_READER_FACTORY.createReader(nonClosingInputStream(in), StandardCharsets.UTF_8)")
+                ._try("JsonReader jsonReader = JSON_READER_FACTORY.createReader(nonClosingInputStream(in), StandardCharsets.UTF_8)")
                 .assign("JsonObject jsonObject", "jsonReader.readObject()")
                 ._return("parseAndFilter(jsonObject, elementsToInclude)")
-            ._catch("FHIRParserException e")
+                ._catch("FHIRParserException e")
                 ._throw("e")
-            ._catch("Exception e")
+                ._catch("Exception e")
                 ._throw("new FHIRParserException(e.getMessage(), getPath(), e)")
-            ._end()
-        .end();
+                ._end()
+                .end();
         cb.newLine();
 
         // public <T extends Resource> T parse(Reader reader) throws FHIRException
         cb.override();
         cb.method(mods("public"), "<T extends Resource> T", "parse", params("Reader reader"), throwsExceptions("FHIRParserException"))
-            ._return("parseAndFilter(reader, null)")
-        .end();
+                ._return("parseAndFilter(reader, null)")
+                .end();
         cb.newLine();
 
         // public <T extends Resource> T parseAndFilter(Reader reader, java.util.List<java.lang.String> elementsToInclude) throws FHIRException
         cb.method(mods("public"), "<T extends Resource> T", "parseAndFilter", params("Reader reader", "Collection<java.lang.String> elementsToInclude"), throwsExceptions("FHIRParserException"))
-            ._try("JsonReader jsonReader = JSON_READER_FACTORY.createReader(nonClosingReader(reader))")
+                ._try("JsonReader jsonReader = JSON_READER_FACTORY.createReader(nonClosingReader(reader))")
                 .assign("JsonObject jsonObject", "jsonReader.readObject()")
                 ._return("parseAndFilter(jsonObject, elementsToInclude)")
-            ._catch("FHIRParserException e")
+                ._catch("FHIRParserException e")
                 ._throw("e")
-            ._catch("Exception e")
+                ._catch("Exception e")
                 ._throw("new FHIRParserException(e.getMessage(), getPath(), e)")
-            ._end()
-        .end();
+                ._end()
+                .end();
         cb.newLine();
 
         cb.method(mods("public"), "<T extends Resource> T", "parse", args("JsonObject jsonObject"), throwsExceptions("FHIRParserException"))
-            ._return("parseAndFilter(jsonObject, null)")
-        .end();
+                ._return("parseAndFilter(jsonObject, null)")
+                .end();
         cb.newLine();
 
         // public <T extends Resource> T parseAndFilter(JsonObject jsonObject, java.util.List<java.lang.String> elementsToInclude)
         cb.annotation("SuppressWarnings", quote("unchecked"));
         cb.method(mods("public"), "<T extends Resource> T", "parseAndFilter", params("JsonObject jsonObject", "Collection<java.lang.String> elementsToInclude"), throwsExceptions("FHIRParserException"))
-            ._try()
+                ._try()
                 .invoke("reset", args())
                 .assign("Class<?> resourceType", "getResourceType(jsonObject)")
                 ._if("elementsToInclude != null")
-                    .assign("ElementFilter elementFilter", "new ElementFilter(resourceType, elementsToInclude)")
-                    .assign("jsonObject", "elementFilter.apply(jsonObject)")
+                .assign("ElementFilter elementFilter", "new ElementFilter(resourceType, elementsToInclude)")
+                .assign("jsonObject", "elementFilter.apply(jsonObject)")
                 ._end()
                 ._return("(T) parseResource(resourceType.getSimpleName(), jsonObject, -1)")
-            ._catch("Exception e")
+                ._catch("Exception e")
                 ._throw("new FHIRParserException(e.getMessage(), getPath(), e)")
-            ._end()
-        .end();
+                ._end()
+                .end();
         cb.newLine();
 
         cb.method(mods("private"), "void", "reset")
-            .invoke("stack", "clear", args())
-        .end();
+                .invoke("stack", "clear", args())
+                .end();
         cb.newLine();
 
         cb.override();
         cb.method(mods("public"), "boolean", "isPropertySupported", params("java.lang.String name"))
-            ._if("FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS.equals(name)")
+                ._if("FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS.equals(name)")
                 ._return("true")
-            ._end()
-            ._return("false")
-        .end();
+                ._end()
+                ._return("false")
+                .end();
         cb.newLine();
 
         cb.method(mods("private"), "Resource", "parseResource", params("java.lang.String elementName", "JsonObject jsonObject", "int elementIndex"));
@@ -2513,39 +2516,39 @@ public class CodeGenerator {
         }
 
         cb.method(mods("private"), "void", "stackPush", params("java.lang.String elementName", "int elementIndex"))
-            ._if("elementIndex != -1")
+                ._if("elementIndex != -1")
                 .invoke("stack", "push", args("elementName + \"[\" + elementIndex + \"]\""))
-            ._else()
+                ._else()
                 .invoke("stack", "push", args("elementName"))
-            ._end()
-            ._if("DEBUG")
+                ._end()
+                ._if("DEBUG")
                 .invoke("System.out", "println", args("getPath()"))
-            ._end()
-        .end().newLine();
+                ._end()
+                .end().newLine();
 
         cb.method(mods("private"), "void", "stackPop")
-            .invoke("stack", "pop", args())
-        .end().newLine();
+                .invoke("stack", "pop", args())
+                .end().newLine();
 
         generateParseChoiceElementMethod(cb);
 
         cb.method(mods("private"), "java.lang.String", "getPath")
-            .assign("StringJoiner joiner", "new StringJoiner(\".\")")
-            ._foreach("java.lang.String s", "stack")
+                .assign("StringJoiner joiner", "new StringJoiner(\".\")")
+                ._foreach("java.lang.String s", "stack")
                 .invoke("joiner", "add", args("s"))
-            ._end()
-            ._return("joiner.toString()")
-        .end().newLine();
+                ._end()
+                ._return("joiner.toString()")
+                .end().newLine();
 
         cb.method(mods("private"), "java.lang.String", "parseJavaString", params("java.lang.String elementName", "JsonString jsonString", "int elementIndex"))
-            ._if("jsonString == null")
+                ._if("jsonString == null")
                 ._return("null")
-            ._end()
-            .invoke("stackPush", args("elementName", "elementIndex"))
-            .assign("java.lang.String javaString", "jsonString.getString()")
-            .invoke("stackPop", args())
-            ._return("javaString")
-        .end();
+                ._end()
+                .invoke("stackPush", args("elementName", "elementIndex"))
+                .assign("java.lang.String javaString", "jsonString.getString()")
+                .invoke("stackPop", args())
+                ._return("javaString")
+                .end();
 
         cb._end();
 
@@ -2569,8 +2572,8 @@ public class CodeGenerator {
     private void generateParseChoiceElementMethod(CodeBuilder cb) {
         cb.method(mods("private"), "Element", "parseChoiceElement", params("java.lang.String name", "JsonObject jsonObject", "Class<?>... choiceTypes"));
         cb._if("jsonObject == null")
-            ._return("null")
-        ._end();
+                ._return("null")
+                ._end();
 
         cb.newLine();
 
@@ -2581,48 +2584,48 @@ public class CodeGenerator {
         cb.newLine();
 
         cb._foreach("Class<?> choiceType", "choiceTypes")
-            .assign("java.lang.String key", "getChoiceElementName(name, choiceType)")
-            ._if("jsonObject.containsKey(key)")
+                .assign("java.lang.String key", "getChoiceElementName(name, choiceType)")
+                ._if("jsonObject.containsKey(key)")
                 ._if("elementName != null")
-                    ._throw("new IllegalArgumentException()")
+                ._throw("new IllegalArgumentException()")
                 ._end()
                 .assign("elementName", "key")
                 .assign("elementType", "choiceType")
-            ._end()
+                ._end()
 
-            .newLine()
+                .newLine()
 
-            .assign("java.lang.String _key", "\"_\" + key")
-            ._if("jsonObject.containsKey(_key)")
+                .assign("java.lang.String _key", "\"_\" + key")
+                ._if("jsonObject.containsKey(_key)")
                 ._if("_elementName != null")
-                    ._throw("new IllegalArgumentException()")
+                ._throw("new IllegalArgumentException()")
                 ._end()
                 .assign("_elementName", "_key")
                 ._if("elementType == null")
-                    .assign("elementType", "choiceType")
+                .assign("elementType", "choiceType")
                 ._end()
-            ._end()
-        ._end();
+                ._end()
+                ._end();
 
         cb.newLine();
 
         cb._if("elementName != null && _elementName != null && !_elementName.endsWith(elementName)")
-            ._throw("new IllegalArgumentException()")
-        ._end();
+                ._throw("new IllegalArgumentException()")
+                ._end();
 
         cb.newLine();
 
         cb.assign("JsonValue jsonValue", "null");
         cb._if("elementName != null")
-            .assign("jsonValue", "jsonObject.get(elementName)")
-        ._end();
+                .assign("jsonValue", "jsonObject.get(elementName)")
+                ._end();
 
         cb.newLine();
 
         cb.assign("JsonValue _jsonValue", "null");
         cb._if("_elementName != null")
-            .assign("_jsonValue", "jsonObject.get(_elementName)")
-        ._end();
+                .assign("_jsonValue", "jsonObject.get(_elementName)")
+                ._end();
 
         cb.newLine();
 
@@ -2672,12 +2675,12 @@ public class CodeGenerator {
                 cb.method(mods("private"), generatedClassName, "parse" + generatedClassName.replace(".", ""), params("java.lang.String elementName", "JsonObject jsonObject", "int elementIndex"));
             }
             cb._if("jsonObject == null")
-                ._return("null")
-            ._end();
+                    ._return("null")
+                    ._end();
             cb.invoke("stackPush", args("elementName", "elementIndex"));
             cb._if("getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false")
-                .invoke("checkForUnrecognizedElements", args(generatedClassName + ".class", "jsonObject"))
-            ._end();
+                    .invoke("checkForUnrecognizedElements", args(generatedClassName + ".class", "jsonObject"))
+                    ._end();
         }
 
         if (!isAbstract(structureDefinition) && !"Quantity".equals(generatedClassName)) {
@@ -2751,8 +2754,8 @@ public class CodeGenerator {
         }
 
         cb._if("jsonValue == null && _jsonValue == null")
-            ._return("null")
-        ._end();
+                ._return("null")
+                ._end();
 
         cb.invoke("stackPush", args("elementName", "elementIndex"));
 
@@ -2761,18 +2764,18 @@ public class CodeGenerator {
         }
 
         cb._if("_jsonValue != null && _jsonValue.getValueType() == JsonValue.ValueType.OBJECT")
-            .assign("JsonObject jsonObject", "(JsonObject) _jsonValue")
-            ._if("getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false")
+                .assign("JsonObject jsonObject", "(JsonObject) _jsonValue")
+                ._if("getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false")
                 .invoke("checkForUnrecognizedElements", args("Element.class", "jsonObject"))
-            ._end()
-            .invoke("parseElement", args("builder", "jsonObject"))
-        ._end();
+                ._end()
+                .invoke("parseElement", args("builder", "jsonObject"))
+                ._end();
 
         if ("Integer".equals(generatedClassName)) {
             cb._if("jsonValue != null && jsonValue.getValueType() == JsonValue.ValueType.NUMBER")
-                .assign("JsonNumber jsonNumber", "(JsonNumber) jsonValue")
-                .invoke("builder", "value", args("jsonNumber.intValueExact()"))
-            ._end();
+                    .assign("JsonNumber jsonNumber", "(JsonNumber) jsonValue")
+                    .invoke("builder", "value", args("jsonNumber.intValueExact()"))
+                    ._end();
         }
 
         if ("String".equals(generatedClassName) ||
@@ -2784,22 +2787,22 @@ public class CodeGenerator {
                 "Base64Binary".equals(generatedClassName) ||
                 "Xhtml".equals(generatedClassName)) {
             cb._if("jsonValue != null && jsonValue.getValueType() == JsonValue.ValueType.STRING")
-                .assign("JsonString jsonString", "(JsonString) jsonValue")
-                .invoke("builder", "value", args("jsonString.getString()"))
-            ._end();
+                    .assign("JsonString jsonString", "(JsonString) jsonValue")
+                    .invoke("builder", "value", args("jsonString.getString()"))
+                    ._end();
         }
 
         if ("Boolean".equals(generatedClassName)) {
             cb._if("JsonValue.TRUE.equals(jsonValue) || JsonValue.FALSE.equals(jsonValue)")
-                .invoke("builder", "value", args("JsonValue.TRUE.equals(jsonValue) ? java.lang.Boolean.TRUE : java.lang.Boolean.FALSE"))
-            ._end();
+                    .invoke("builder", "value", args("JsonValue.TRUE.equals(jsonValue) ? java.lang.Boolean.TRUE : java.lang.Boolean.FALSE"))
+                    ._end();
         }
 
         if ("Decimal".equals(generatedClassName)) {
             cb._if("jsonValue != null && jsonValue.getValueType() == JsonValue.ValueType.NUMBER")
-                .assign("JsonNumber jsonNumber", "(JsonNumber) jsonValue")
-                .invoke("builder", "value", args("jsonNumber.bigDecimalValue()"))
-            ._end();
+                    .assign("JsonNumber jsonNumber", "(JsonNumber) jsonValue")
+                    .invoke("builder", "value", args("jsonNumber.bigDecimalValue()"))
+                    ._end();
         }
 
         cb.invoke("stackPop", args());
@@ -2808,8 +2811,8 @@ public class CodeGenerator {
 
         if ("String".equals(generatedClassName) || "Uri".equals(generatedClassName) || "Integer".equals(generatedClassName)) {
             cb.method(mods("private"), generatedClassName, "parse" + generatedClassName, params("java.lang.String elementName", "JsonValue jsonValue", "JsonValue _jsonValue", "int elementIndex"))
-                ._return("parse" + generatedClassName + "(" + generatedClassName + ".builder(), elementName, jsonValue, _jsonValue, elementIndex)")
-            .end().newLine();
+                    ._return("parse" + generatedClassName + "(" + generatedClassName + ".builder(), elementName, jsonValue, _jsonValue, elementIndex)")
+                    .end().newLine();
         }
     }
 
@@ -2865,55 +2868,55 @@ public class CodeGenerator {
                     String enumConstantName = getEnumConstantName(bindingName, value);
                     generateConceptJavadoc(concept, cb);
                     cb.field(mods("public", "static", "final"), bindingName, enumConstantName, bindingName + ".builder().value(ValueSet." + enumConstantName + ").build()")
-                        .newLine();
+                            .newLine();
                 }
 
                 cb.field(mods("private", "volatile"), "int", "hashCode").newLine();
 
                 cb.constructor(mods("private"), bindingName, params("Builder builder"))
-                    ._super(args("builder"))
-                .end().newLine();
+                        ._super(args("builder"))
+                        .end().newLine();
 
                 cb.method(mods("public"), "ValueSet", "getValueAsEnumConstant")
-                    ._return("(value != null) ? ValueSet.from(value) : null")
-                .end().newLine();
+                        ._return("(value != null) ? ValueSet.from(value) : null")
+                        .end().newLine();
 
                 cb.method(mods("public", "static"), bindingName, "of", args("ValueSet value"))
-                    ._switch("value");
-                    for (JsonObject concept : concepts) {
-                        String value = concept.getString("code");
-                        String enumConstantName = getEnumConstantName(bindingName, value);
-                        cb._case(enumConstantName)
+                        ._switch("value");
+                for (JsonObject concept : concepts) {
+                    String value = concept.getString("code");
+                    String enumConstantName = getEnumConstantName(bindingName, value);
+                    cb._case(enumConstantName)
                             ._return(enumConstantName);
-                    }
-                    cb._default()
+                }
+                cb._default()
                         ._throw(_new("IllegalStateException", args("value.name()")));
-                    cb.end();
+                cb.end();
                 cb.end().newLine();
 
                 cb.method(mods("public", "static"), bindingName, "of", args("java.lang.String value"))
-                    ._return("of(ValueSet.from(value))")
-                .end().newLine();
+                        ._return("of(ValueSet.from(value))")
+                        .end().newLine();
 
                 cb.method(mods("public", "static"), "String", "string", args("java.lang.String value"))
-                    ._return("of(ValueSet.from(value))")
-                .end().newLine();
+                        ._return("of(ValueSet.from(value))")
+                        .end().newLine();
 
                 cb.method(mods("public", "static"), "Code", "code", args("java.lang.String value"))
-                    ._return("of(ValueSet.from(value))")
-                .end().newLine();
+                        ._return("of(ValueSet.from(value))")
+                        .end().newLine();
 
                 cb.override();
                 cb.method(mods("public"), "boolean", "equals", params("Object obj"));
                 cb._if("this == obj")
-                    ._return("true")
-                ._end();
+                        ._return("true")
+                        ._end();
                 cb._if("obj == null")
-                    ._return("false")
-                ._end();
+                        ._return("false")
+                        ._end();
                 cb._if("getClass() != obj.getClass()")
-                    ._return("false")
-                ._end();
+                        ._return("false")
+                        ._end();
                 cb.assign(bindingName + " other", "(" + bindingName + ") obj");
                 cb._return("Objects.equals(id, other.id) && Objects.equals(extension, other.extension) && Objects.equals(value, other.value)");
                 cb.end().newLine();
@@ -2929,51 +2932,51 @@ public class CodeGenerator {
                 cb.end().newLine();
 
                 cb.method(mods("public"), "Builder", "toBuilder")
-                    .assign("Builder builder", "new Builder()")
-                    .invoke("builder", "id", args("id"))
-                    .invoke("builder", "extension", args("extension"))
-                    .invoke("builder", "value", args("value"))
-                    ._return("builder")
-                .end().newLine();
+                        .assign("Builder builder", "new Builder()")
+                        .invoke("builder", "id", args("id"))
+                        .invoke("builder", "extension", args("extension"))
+                        .invoke("builder", "value", args("value"))
+                        ._return("builder")
+                        .end().newLine();
 
                 cb.method(mods("public", "static"), "Builder", "builder")
-                    ._return(_new("Builder"))
-                .end().newLine();
+                        ._return(_new("Builder"))
+                        .end().newLine();
 
                 cb._class(mods("public", "static"), "Builder", "Code.Builder");
 
                 cb.constructor(mods("private"), "Builder")
-                    ._super()
-                .end().newLine();
+                        ._super()
+                        .end().newLine();
 
                 cb.override();
                 cb.method(mods("public"), "Builder", "id", args("java.lang.String id"))
-                    ._return("(Builder) super.id(id)")
-                .end().newLine();
+                        ._return("(Builder) super.id(id)")
+                        .end().newLine();
 
                 cb.override();
                 cb.method(mods("public"), "Builder", "extension", args("Extension... extension"))
-                    ._return("(Builder) super.extension(extension)")
-                .end().newLine();
+                        ._return("(Builder) super.extension(extension)")
+                        .end().newLine();
 
                 cb.override();
                 cb.method(mods("public"), "Builder", "extension", args("Collection<Extension> extension"))
-                    ._return("(Builder) super.extension(extension)")
-                .end().newLine();
+                        ._return("(Builder) super.extension(extension)")
+                        .end().newLine();
 
                 cb.override();
                 cb.method(mods("public"), "Builder", "value", args("java.lang.String value"))
-                    ._return("(value != null) ? (Builder) super.value(ValueSet.from(value).value()) : this")
-                .end().newLine();
+                        ._return("(value != null) ? (Builder) super.value(ValueSet.from(value).value()) : this")
+                        .end().newLine();
 
                 cb.method(mods("public"), "Builder", "value", args("ValueSet value"))
-                    ._return("(value != null) ? (Builder) super.value(value.value()) : this")
-                .end().newLine();
+                        ._return("(value != null) ? (Builder) super.value(value.value()) : this")
+                        .end().newLine();
 
                 cb.override();
                 cb.method(mods("public"), bindingName, "build")
-                    ._return(_new(bindingName, args("this")))
-                .end();
+                        ._return(_new(bindingName, args("this")))
+                        .end();
 
                 cb._end().newLine();
 
@@ -2994,21 +2997,21 @@ public class CodeGenerator {
                 cb.field(mods("private", "final"), "java.lang.String", "value").newLine();
 
                 cb.constructor(mods(), "ValueSet", args("java.lang.String value"))
-                    .assign(_this("value"), "value")
-                .end().newLine();
+                        .assign(_this("value"), "value")
+                        .end().newLine();
 
                 cb.method(mods("public"), "java.lang.String", "value")
-                    ._return("value")
-                .end().newLine();
+                        ._return("value")
+                        .end().newLine();
 
                 cb.method(mods("public", "static"), "ValueSet", "from", params("java.lang.String value"))
-                    ._foreach("ValueSet c", "ValueSet.values()")
+                        ._foreach("ValueSet c", "ValueSet.values()")
                         ._if("c.value.equals(value)")
-                            ._return("c")
+                        ._return("c")
                         ._end()
-                    ._end()
-                    ._throw(_new("IllegalArgumentException", args("value")))
-                .end();
+                        ._end()
+                        ._throw(_new("IllegalArgumentException", args("value")))
+                        .end();
 
                 cb._end();
 
@@ -3322,6 +3325,11 @@ public class CodeGenerator {
     }
 
     private List<JsonObject> getElementDefinitions(JsonObject structureDefinition) {
+        //added for flow verification
+        if (structureDefinition.get("name").toString().contains("CoveragePlan")
+                || structureDefinition.get("name").toString().contains("FormularyDrug")){
+            return getElementDefinitions(structureDefinition, true);
+        }
         return getElementDefinitions(structureDefinition, false);
     }
 
@@ -3354,7 +3362,7 @@ public class CodeGenerator {
     }
 
     private List<JsonObject> getElementDefinitions(JsonObject structureDefinition, String path) {
-        return getElementDefinitions(structureDefinition, true).stream().filter(o -> o.getString("path").startsWith(path + ".") && !o.getString("path").replaceFirst(path + ".",  "").contains(".") && !o.getString("path").equals(path)).collect(Collectors.toList());
+        return getElementDefinitions(structureDefinition, true).stream().filter(o -> o.getString("path").startsWith(path + ".") && !o.getString("path").replaceFirst(path + ".", "").contains(".") && !o.getString("path").equals(path)).collect(Collectors.toList());
     }
 
     private String getElementName(JsonObject elementDefinition, String path) {
@@ -3364,44 +3372,44 @@ public class CodeGenerator {
     private String getEnumConstantName(String name, String value) {
         StringBuilder sb = new StringBuilder();
         switch (name) {
-        case "AuditEventAgentNetworkType":
-            sb.append("TYPE_");
-            break;
-        case "AuditEventOutcome":
-            sb.append("OUTCOME_");
-            break;
-        case "FHIRVersion":
-            sb.append("VERSION_");
-            break;
-        case "SPDXLicense":
-            sb.append("LICENSE_");
-            break;
+            case "AuditEventAgentNetworkType":
+                sb.append("TYPE_");
+                break;
+            case "AuditEventOutcome":
+                sb.append("OUTCOME_");
+                break;
+            case "FHIRVersion":
+                sb.append("VERSION_");
+                break;
+            case "SPDXLicense":
+                sb.append("LICENSE_");
+                break;
         }
         sb.append(String.join("_", value.split("(?<=[a-z])(?=[A-Z])"))
-            .replace("<=", "less-or-equals")
-            .replace(">=", "greater-or-equals")
-            .replace("!=", "not-equals")
-            .replace("=", "equals")
-            .replace("<", "less-than")
-            .replace(">", "greater-than")
-            .replace("/", "_")
-            .replace("-", "_")
-            .replace(".", "_")
-            .toUpperCase());
+                .replace("<=", "less-or-equals")
+                .replace(">=", "greater-or-equals")
+                .replace("!=", "not-equals")
+                .replace("=", "equals")
+                .replace("<", "less-than")
+                .replace(">", "greater-than")
+                .replace("/", "_")
+                .replace("-", "_")
+                .replace(".", "_")
+                .toUpperCase());
         return sb.toString();
     }
 
     private String getExpectedType(String className) {
         switch (className) {
-        case "Boolean":
-            return "JsonValue";
-        case "Decimal":
-        case "Integer":
-        case "PositiveInt":
-        case "UnsignedInt":
-            return "JsonNumber";
-        default:
-            return "JsonString";
+            case "Boolean":
+                return "JsonValue";
+            case "Decimal":
+            case "Integer":
+            case "PositiveInt":
+            case "UnsignedInt":
+                return "JsonNumber";
+            default:
+                return "JsonString";
         }
     }
 
@@ -3429,7 +3437,6 @@ public class CodeGenerator {
      * @param structureDefinition
      * @param elementDefinition
      * @param fieldType
-     *
      * @return
      */
     public String getFieldTypeForJavaDocLink(JsonObject structureDefinition, JsonObject elementDefinition, String fieldType) {
@@ -3438,25 +3445,25 @@ public class CodeGenerator {
         if (isPrimitiveType(structureDefinition) && path.endsWith("value")) {
             String name = structureDefinition.getString("name");
             switch (name) {
-            case "base64Binary":
-                return "java.lang.byte[]";
-            case "boolean":
-                return "java.lang.Boolean";
-            case "date":
-            case "dateTime":
-                return "java.time.TemporalAccessor";
-            case "decimal":
-                return "java.math.BigDecimal";
-            case "instant":
-                return "java.time.ZonedDateTime";
-            case "integer":
-            case "unsignedInt":
-            case "positiveInt":
-                return "java.lang.Integer";
-            case "time":
-                return "java.time.LocalTime";
-            default:
-                return "java.lang.String";
+                case "base64Binary":
+                    return "java.lang.byte[]";
+                case "boolean":
+                    return "java.lang.Boolean";
+                case "date":
+                case "dateTime":
+                    return "java.time.TemporalAccessor";
+                case "decimal":
+                    return "java.math.BigDecimal";
+                case "instant":
+                    return "java.time.ZonedDateTime";
+                case "integer":
+                case "unsignedInt":
+                case "positiveInt":
+                    return "java.lang.Integer";
+                case "time":
+                    return "java.time.LocalTime";
+                default:
+                    return "java.lang.String";
             }
         }
 
@@ -3471,25 +3478,25 @@ public class CodeGenerator {
         if (isPrimitiveType(structureDefinition) && path.endsWith("value")) {
             String name = structureDefinition.getString("name");
             switch (name) {
-            case "base64Binary":
-                return "byte[]";
-            case "boolean":
-                return "java.lang.Boolean";
-            case "date":
-            case "dateTime":
-                return "TemporalAccessor";
-            case "decimal":
-                return "BigDecimal";
-            case "instant":
-                return "ZonedDateTime";
-            case "integer":
-            case "unsignedInt":
-            case "positiveInt":
-                return "java.lang.Integer";
-            case "time":
-                return "LocalTime";
-            default:
-                return "java.lang.String";
+                case "base64Binary":
+                    return "byte[]";
+                case "boolean":
+                    return "java.lang.Boolean";
+                case "date":
+                case "dateTime":
+                    return "TemporalAccessor";
+                case "decimal":
+                    return "BigDecimal";
+                case "instant":
+                    return "ZonedDateTime";
+                case "integer":
+                case "unsignedInt":
+                case "positiveInt":
+                    return "java.lang.Integer";
+                case "time":
+                    return "LocalTime";
+                default:
+                    return "java.lang.String";
             }
         }
 
@@ -3649,19 +3656,19 @@ public class CodeGenerator {
     private boolean isBackboneElement(JsonObject elementDefinition) {
         String path = elementDefinition.getString("path");
         if ("DataRequirement.codeFilter".equals(path) ||
-            "DataRequirement.dateFilter".equals(path) ||
-            "DataRequirement.sort".equals(path) ||
-            "Dosage.doseAndRate".equals(path) ||
-            "ElementDefinition.slicing".equals(path) ||
-            "ElementDefinition.slicing.discriminator".equals(path) ||
-            "ElementDefinition.base".equals(path) ||
-            "ElementDefinition.type".equals(path) ||
-            "ElementDefinition.example".equals(path) ||
-            "ElementDefinition.constraint".equals(path) ||
-            "ElementDefinition.binding".equals(path) ||
-            "ElementDefinition.mapping".equals(path) ||
-            "SubstanceAmount.referenceRange".equals(path) ||
-            "Timing.repeat".equals(path)) {
+                "DataRequirement.dateFilter".equals(path) ||
+                "DataRequirement.sort".equals(path) ||
+                "Dosage.doseAndRate".equals(path) ||
+                "ElementDefinition.slicing".equals(path) ||
+                "ElementDefinition.slicing.discriminator".equals(path) ||
+                "ElementDefinition.base".equals(path) ||
+                "ElementDefinition.type".equals(path) ||
+                "ElementDefinition.example".equals(path) ||
+                "ElementDefinition.constraint".equals(path) ||
+                "ElementDefinition.binding".equals(path) ||
+                "ElementDefinition.mapping".equals(path) ||
+                "SubstanceAmount.referenceRange".equals(path) ||
+                "Timing.repeat".equals(path)) {
             return true;
         }
         List<JsonObject> types = getTypes(elementDefinition);
@@ -3893,16 +3900,36 @@ public class CodeGenerator {
             List<JsonObject> resources = new ArrayList<>();
             JsonObject bundle = reader.readObject();
 
-            for (JsonValue entry : bundle.getJsonArray("entry")) {
-                JsonObject resource = entry.asJsonObject().getJsonObject("resource");
-                JsonString kind = resource.getJsonString("kind");
-                if (kind != null && "logical".equals(kind.getString())) {
-                    continue;
+            if (bundle.containsKey("entry")) {
+                //regular flow
+                for (JsonValue entry : bundle.getJsonArray("entry")) {
+                    JsonObject resource = entry.asJsonObject().getJsonObject("resource");
+                    JsonString kind = resource.getJsonString("kind");
+                    if (kind != null && "logical".equals(kind.getString())) {
+                        continue;
+                    }
+                    if (resourceType.equals(resource.getString("resourceType"))) {
+                        resources.add(resource);
+                    }
                 }
-                if (resourceType.equals(resource.getString("resourceType"))) {
-                    resources.add(resource);
+            } else {
+                //usdf definition received
+                if (resourceType.equals(bundle.getString("resourceType"))) {
+                    resources.add(bundle);
                 }
+
             }
+
+//            for (JsonValue entry : bundle.getJsonArray("entry")) {
+//                JsonObject resource = entry.asJsonObject().getJsonObject("resource");
+//                JsonString kind = resource.getJsonString("kind");
+//                if (kind != null && "logical".equals(kind.getString())) {
+//                    continue;
+//                }
+//                if (resourceType.equals(resource.getString("resourceType"))) {
+//                    resources.add(resource);
+//                }
+//            }
 
             Collections.sort(resources, new Comparator<JsonObject>() {
                 @Override
@@ -3926,15 +3953,37 @@ public class CodeGenerator {
         }
     }
 
+    private static void loadExtensions(Map<String, JsonObject> objectMap, String extensionsDir, String type) {
+//        log.info("*************** Load Extension: "+extensionsDir);
+        System.out.println("*************** Load Extension: " + extensionsDir);
+        try (Stream<Path> walk = Files.walk(Paths.get(extensionsDir))) {
+//            log.info("*************** innnnn");
+            System.out.println("*************** innnnn");
+            List<String> result = walk.map(x -> x.toString()).filter(f -> f.startsWith("./extensions/" + type)).collect(Collectors.toList());
+
+            result.forEach(f -> {
+                objectMap.putAll(CodeGenerator.buildResourceMap(f, type));
+            });
+            System.out.println("Done");
+
+        } catch (IOException e) {
+//            log.error("Failed to load extensions from "+ extensionsDir, e);
+            System.out.println("Failed to load extensions from " + extensionsDir + e);
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         Map<String, JsonObject> structureDefinitionMap = buildResourceMap("./definitions/profiles-resources.json", "StructureDefinition");
         structureDefinitionMap.putAll(buildResourceMap("./definitions/profiles-types.json", "StructureDefinition"));
+        loadExtensions(structureDefinitionMap, "./extensions", "StructureDefinition");
 
         Map<String, JsonObject> codeSystemMap = buildResourceMap("./definitions/valuesets.json", "CodeSystem");
         codeSystemMap.putAll(buildResourceMap("./definitions/v3-codesystems.json", "CodeSystem"));
+        loadExtensions(codeSystemMap, "./extensions", "CodeSystem");
 
         Map<String, JsonObject> valueSetMap = buildResourceMap("./definitions/valuesets.json", "ValueSet");
         valueSetMap.putAll(buildResourceMap("./definitions/v3-codesystems.json", "ValueSet"));
+        loadExtensions(valueSetMap, "./extensions", "ValueSet");
 
         CodeGenerator generator = new CodeGenerator(structureDefinitionMap, codeSystemMap, valueSetMap);
         generator.generate("./src/main/java");
