@@ -1709,6 +1709,9 @@ public class CodeGenerator {
                 imports.add("com.ibm.fhir.model.type." + fieldType);
             } else if (hasRequiredBinding(elementDefinition)) {
                 imports.add("com.ibm.fhir.model.type.code." + fieldType);
+            }else if (structureDefinition.getString("kind").equals("resource") && isDataType(definition)){
+                //this is for usdf resources which are not extended from Resource or DomainResource
+                imports.add("com.ibm.fhir.model.type." + fieldType);
             }
 
             if (isProhibited(elementDefinition)) {
