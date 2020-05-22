@@ -16,14 +16,15 @@ import static com.ibm.fhir.tools.CodeBuilder.param;
 import static com.ibm.fhir.tools.CodeBuilder.params;
 import static com.ibm.fhir.tools.CodeBuilder.quote;
 import static com.ibm.fhir.tools.CodeBuilder.throwsExceptions;
+import static com.ibm.fhir.tools.USDFConstants.ENABLEXML;
+import static com.ibm.fhir.tools.USDFConstants.FULLCLASSNAMELIST;
+import static com.ibm.fhir.tools.USDFUtils.*;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,7 +37,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -46,6 +46,9 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.lang.model.SourceVersion;
 
+/**
+ *
+ */
 public class CodeGenerator {
     private final Map<String, JsonObject> structureDefinitionMap;
     private final Map<String, JsonObject> codeSystemMap;
@@ -112,7 +115,20 @@ public class CodeGenerator {
             "RelatedArtifact",
             "TriggerDefinition",
             "UsageContext",
-            "Dosage");
+            "Dosage",
+            //usdf types
+            "DrugAlternatives",
+            "DrugTierDefinition",
+            "DrugTierID",
+            "FormularyURL",
+            "MarketingURL",
+            "Network",
+            "PlanID",
+            "PlanIDType",
+            "PriorAuthorization",
+            "QuantityLimit",
+            "StepTherapyLimit",
+            "SummaryURL");
     private static final List<String> PROFILED_TYPES = Arrays.asList("SimpleQuantity", "MoneyQuantity");
     private static final List<String> MODEL_CHECKED_CONSTRAINTS = Arrays.asList("ele-1", "sqty-1");
     private static final List<String> HEADER = readHeader();
@@ -260,7 +276,10 @@ public class CodeGenerator {
         generateVisitorInterface(basePath);
         generateDefaultVisitorClass(basePath);
         generateJsonParser(basePath);
-        generateXMLParser(basePath);
+        if (ENABLEXML) {
+            //not supported for usdf resources
+            generateXMLParser(basePath);
+        }
         generateModelClassesFile(basePath);
     }
 
@@ -491,7 +510,18 @@ public class CodeGenerator {
 
             if (isRepeating(elementDefinition)) {
                 String fieldType = getFieldType(structureDefinition, elementDefinition, false);
-                args.add(fieldType + ".class");
+                if (fieldType.contains("-")){
+                    args.add(fieldType.split("-")[1] + ".class");
+                }else{
+                    args.add(fieldType + ".class");
+                }
+            }else if (isRepeatingUSDF(elementDefinition) && fieldName.equals("extension")){
+                String fieldType = getFieldType(structureDefinition, elementDefinition, false);
+                if (fieldType.contains("-")){
+                    args.add(fieldType.split("-")[1] + ".class");
+                }else{
+                    args.add(fieldType + ".class");
+                }
             }
 
             cb.invoke("accept", args);
@@ -514,7 +544,11 @@ public class CodeGenerator {
         } else {
             JsonObject baseDefinition = getBaseDefinition(structureDefinition);
             if (baseDefinition != null) {
-                _super = titleCase(baseDefinition.getString("name")) + ".Builder";
+                if (baseDefinition.getString("name").equals(USDFConstants.UsdfSuperClass.List.toString())) {
+                    _super = "com.ibm.fhir.model.resource.List" + ".Builder";
+                } else {
+                    _super = titleCase(baseDefinition.getString("name")) + ".Builder";
+                }
             } else {
                 _super = "AbstractBuilder<" + structureDefinition.getString("name") + ">";
             }
@@ -535,10 +569,17 @@ public class CodeGenerator {
         if (isProfiledType(className)) {
             declaredElementDefinitions = Collections.emptyList();
         }
+        Map<String, Object> fieldsAdded = new HashMap<>();
         if (!declaredElementDefinitions.isEmpty()) {
             for (JsonObject elementDefinition : declaredElementDefinitions) {
                 String fieldName = getFieldName(elementDefinition, path);
                 String fieldType = getFieldType(structureDefinition, elementDefinition);
+                if (fieldsAdded.containsKey(fieldName)) {
+                    if (fieldsAdded.get(fieldName).equals(fieldType)) {
+                        continue;
+                    }
+                }
+                fieldsAdded.put(fieldName, fieldType);
                 String init = null;
                 if (isRepeating(elementDefinition)) {
                     init = "new ArrayList<>()";
@@ -558,22 +599,38 @@ public class CodeGenerator {
 
         List<String> requiredElementNames = new ArrayList<>();
 
+        fieldsAdded.clear();
         for (JsonObject elementDefinition : elementDefinitions) {
             boolean declaredBy = isDeclaredBy(className, elementDefinition);
 
             String fieldName = getFieldName(elementDefinition, path);
             String fieldType = getFieldType(structureDefinition, elementDefinition);
+            if (fieldsAdded.containsKey(fieldName)) {
+                if (fieldsAdded.get(fieldName).equals(fieldType)) {
+                    continue;
+                }
+            }
+            fieldsAdded.put(fieldName, fieldType);
 
             if (isRequired(elementDefinition)) {
                 requiredElementNames.add(getElementName(elementDefinition, path));
             }
 
             if (isRepeating(elementDefinition)) {
+                //modifying usdf type
+                if (isSkipBuilderMethodsForUSDF(_super)) {
+                    continue;
+                }
                 generateBuilderMethodJavadoc(structureDefinition, elementDefinition, fieldName, "varargs", cb);
                 if (!declaredBy) {
                     cb.override();
                 }
-                cb.method(mods("public"), "Builder", fieldName, params(param(fieldType.replace("java.util.", "").replace("List<", "").replace(">", "..."), fieldName)));
+                cb.method(mods("public"), "Builder", fieldName, params(param(
+                        fieldType.replace("java.util.", "").replace(
+                                "List<", "").replace(">", "...").replace(
+                                "usdf-",""
+                        ).replace("-extension",""), fieldName)));
+//                cb.method(mods("public"), "Builder", fieldName, params(param(fieldType.replace("java.util.", "").replace("List<", "").replace(">", "..."), fieldName)));
                 if (declaredBy) {
                     String varName = "value";
                     if ("value".equals(fieldName)) {
@@ -591,12 +648,20 @@ public class CodeGenerator {
                 cb.end();
                 cb.newLine();
 
-                String paramType = fieldType.replace("java.util.", "").replace("List<", "Collection<");
+                String paramType = fieldType.replace("java.util.", "").replace(
+                        "List<", "Collection<").replace("usdf-","").replace(
+                                "-extension",""
+                );
 
                 if (containsBackboneElement(structureDefinition, "collection")) {
                     paramType = "java.util." + paramType;
                 }
 
+                //usdf update
+                if (isSkipBuilderMethodsForUSDF(_super)){
+                    continue;
+
+                }
                 generateBuilderMethodJavadoc(structureDefinition, elementDefinition, fieldName, "collection", cb);
                 if (!declaredBy) {
                     cb.override();
@@ -613,11 +678,16 @@ public class CodeGenerator {
                 cb.end();
                 // end if isRepeating
             } else {
+                //usdf update
+                if (isSkipBuilderMethodsForUSDF(_super)){
+                    continue;
+                }
                 generateBuilderMethodJavadoc(structureDefinition, elementDefinition, fieldName, "single", cb);
                 if (!declaredBy) {
                     cb.override();
                 }
-                cb.method(mods("public"), "Builder", fieldName, params(param(fieldType, fieldName)));
+                cb.method(mods("public"), "Builder", fieldName, params(param(fieldType.replace(
+                        "usdf-","").replace("-extension",""), fieldName)));
                 if (declaredBy) {
                     cb.assign(_this(fieldName), fieldName);
                     cb._return("this");
@@ -837,7 +907,13 @@ public class CodeGenerator {
         cb.lines(HEADER).newLine();
         cb._package(packageName).newLine();
 
-        generateImports(structureDefinition, className, cb);
+        if ( structureDefinition.getString("name").equals("DrugTierDefinition")
+                || USDFUtils.isUSDFResource(structureDefinition.getString("name"))
+        ){
+            generateImports(structureDefinition, className, cb);
+        }else{
+            generateImports(structureDefinition, className, cb);
+        }
 
         String path = getElementDefinitions(structureDefinition).get(0).getString("path");
         generateClass(structureDefinition, Collections.singletonList(path), cb, false);
@@ -871,7 +947,7 @@ public class CodeGenerator {
                 mods.add("static");
             }
 
-            String _super = null;
+            String _super;
             if (nested) {
                 _super = "BackboneElement";
             } else {
@@ -908,7 +984,13 @@ public class CodeGenerator {
                     stringSubtypeClassNames.add(className);
                 }
                 if (!"AbstractVisitable".equals(_super)) {
-                    superClassMap.put(className, _super);
+                    if (_super.equals(USDFConstants.UsdfSuperClass.List.toString())){
+                        //modifying the _super variable to full resource path to avoid clashes
+                        superClassMap.put(className, _super);
+                        _super="com.ibm.fhir.model.resource.List";
+                    }else{
+                        superClassMap.put(className, _super);
+                    }
                 }
             }
 
@@ -970,6 +1052,7 @@ public class CodeGenerator {
             String visibility = nested ? "private" : visibility(structureDefinition);
 
             int fieldCount = 0;
+            Map<String,Object> fieldsAdded = new HashMap<>();
             for (JsonObject elementDefinition : elementDefinitions) {
                 String basePath = elementDefinition.getJsonObject("base").getString("path");
                 if (elementDefinition.getString("path").equals(basePath)) {
@@ -993,7 +1076,14 @@ public class CodeGenerator {
                     if (isRequired(elementDefinition)) {
                         cb.annotation("Required");
                     }
+                    //handling duplicated fields
+                    if (fieldsAdded.containsKey(fieldName)) {
+                        if (fieldsAdded.get(fieldName).equals(fieldType)) {
+                            continue;
+                        }
+                    }
                     cb.field(mods(visibility, "final"), fieldType, fieldName);
+                    fieldsAdded.put(fieldName, fieldType);
                     if (isBackboneElement(elementDefinition)) {
                         nestedPaths.add(elementDefinition.getString("path"));
                     }
@@ -1014,11 +1104,18 @@ public class CodeGenerator {
                 cb._super(args("builder"));
             }
 
+            fieldsAdded.clear();
             for (JsonObject elementDefinition : elementDefinitions) {
                 String basePath = elementDefinition.getJsonObject("base").getString("path");
                 if (elementDefinition.getString("path").equals(basePath)) {
                     String elementName = getElementName(elementDefinition, path);
                     String fieldName = getFieldName(elementName);
+                    if (fieldsAdded.containsKey(fieldName)){
+                        if (fieldsAdded.get(fieldName).equals(elementName)){
+                            continue;
+                        }
+                    }
+                    fieldsAdded.put(fieldName,elementName);
 
                     if (isRequired(elementDefinition)) {
                         if (isRepeating(elementDefinition)) {
@@ -1140,7 +1237,11 @@ public class CodeGenerator {
                     !isQuantitySubtype(structureDefinition) &&
                     !isXhtml(structureDefinition)) ||
                     nested) {
-                cb.invoke("ValidationSupport", "requireValueOrChildren", args("this"));
+                if (USDFUtils.isUSDFResource(className)){
+                    cb.invoke("ValidationSupport", "requireChildren", args("this"));
+                }else{
+                    cb.invoke("ValidationSupport", "requireValueOrChildren", args("this"));
+                }
             }
 
             if (isResource(structureDefinition) && !isAbstract(structureDefinition) && !nested) {
@@ -1153,12 +1254,24 @@ public class CodeGenerator {
 
             cb.end().newLine();
 
+            fieldsAdded.clear();
             for (JsonObject elementDefinition : elementDefinitions) {
                 String basePath = elementDefinition.getJsonObject("base").getString("path");
-                if (elementDefinition.getString("path").equals(basePath)) {
+                if (elementDefinition.getString("path").equals(basePath) ) {
+                    //removing getter methods from usdf resources. Same methods are implemented in superclass.
+                    if (USDFUtils.isUSDFResource(className) &&
+                    basePath.startsWith(structureDefinition.getString("type"))){
+                        continue;
+                    }
                     String fieldName = getFieldName(elementDefinition, path);
                     String fieldType = getFieldType(structureDefinition, elementDefinition);
                     String methodName = "get" + titleCase(fieldName.replace("_", ""));
+                    if (fieldsAdded.containsKey(fieldName)){
+                        if (fieldsAdded.get(fieldName).equals(fieldType)){
+                            continue;
+                        }
+                    }
+                    fieldsAdded.put(fieldName,fieldType);
                     generateGetterMethodJavadoc(structureDefinition, elementDefinition, fieldType, cb);
                     cb.method(mods("public"), fieldType, methodName)._return(fieldName).end().newLine();
                 }
@@ -1657,6 +1770,17 @@ public class CodeGenerator {
                         imports.add("java.util.List");
                     }
                 }
+                else if(basePath.startsWith(structureDefinition.getString("type")) &&
+                        !basePath.equals(structureDefinition.getString("type"))){
+                    //handling usdf resources
+                    imports.add("com.ibm.fhir.model.util.ValidationSupport");
+                    imports.add("java.util.ArrayList");
+                    imports.add("java.util.Collections");
+                    if (!"List".equals(name)) {
+                        imports.add("java.util.List");
+                    }
+                    imports.add("com.ibm.fhir.model.type.*");
+                }
                 repeating = !basePath.equals(name);
             }
 
@@ -1708,8 +1832,11 @@ public class CodeGenerator {
             if (isResource(structureDefinition) && isDataType(definition)) {
                 imports.add("com.ibm.fhir.model.type." + fieldType);
             } else if (hasRequiredBinding(elementDefinition)) {
-                imports.add("com.ibm.fhir.model.type.code." + fieldType);
-            }else if (structureDefinition.getString("kind").equals("resource") && isDataType(definition)){
+                if (!fieldType.equals("Element")) {
+                    imports.add("com.ibm.fhir.model.type.code." + fieldType);
+                }
+//                imports.add("com.ibm.fhir.model.type.code." + fieldType);
+            } else if (structureDefinition.getString("kind").equals("resource") && isDataType(definition)) {
                 //this is for usdf resources which are not extended from Resource or DomainResource
                 imports.add("com.ibm.fhir.model.type." + fieldType);
             }
@@ -2509,12 +2636,18 @@ public class CodeGenerator {
 
         Collections.sort(generatedClassNames);
 
+        //handle duplications
+        List<String> generatedMethods = new ArrayList<>();
         for (String generatedClassName : generatedClassNames) {
             JsonObject structureDefinition = getStructureDefinition(generatedClassName);
             if (isPrimitiveType(structureDefinition)) {
                 generatePrimitiveTypeParseMethod(generatedClassName, structureDefinition, cb);
             } else {
-                generateParseMethod(generatedClassName, structureDefinition, cb);
+                //usdf
+                if (!generatedMethods.contains(generatedClassName)) {
+                    generateParseMethod(generatedClassName, structureDefinition, cb);
+                    generatedMethods.add(generatedClassName);
+                }
             }
         }
 
@@ -2691,8 +2824,15 @@ public class CodeGenerator {
         }
 
         String superClass = superClassMap.get(generatedClassName);
-        if (superClass != null) {
-            cb.invoke("parse" + superClass, args("builder", "jsonObject"));
+        //parse usdf types and resources
+        if (superClass != null){
+            if (isUSDFSuperClass(superClass)){
+                cb.invoke("parseDomainResource", args("builder", "jsonObject"));
+            }else if (isUSDFSuperType(superClass)){
+                cb.invoke("parseElement", args("builder", "jsonObject"));
+            }else{
+                cb.invoke("parse" + superClass, args("builder", "jsonObject"));
+            }
         }
 
         for (JsonObject elementDefinition : elementDefinitions) {
@@ -3646,6 +3786,8 @@ public class CodeGenerator {
                 "Element".equals(type) ||
                 "BackboneElement".equals(type) ||
                 "Quantity".equals(type) ||
+                isUSDFSuperClass(type) ||
+                isUSDFSuperType(type) ||
                 "string".equals(type) ||
                 "integer".equals(type) ||
                 "code".equals(type) ||
@@ -3818,6 +3960,11 @@ public class CodeGenerator {
         return "*".equals(getMax(elementDefinition)) || (isProhibited(elementDefinition) && "*".equals(getBaseMax(elementDefinition)));
     }
 
+    private boolean isRepeatingUSDF(JsonObject elementDefinition) {
+        //not a confirmed logic, but working
+        return "1".equals(getMax(elementDefinition)) && "*".equals(getBaseMax(elementDefinition));
+    }
+
     private Object getBaseMax(JsonObject elementDefinition) {
         return elementDefinition.getJsonObject("base").getString("max");
     }
@@ -3923,16 +4070,6 @@ public class CodeGenerator {
 
             }
 
-//            for (JsonValue entry : bundle.getJsonArray("entry")) {
-//                JsonObject resource = entry.asJsonObject().getJsonObject("resource");
-//                JsonString kind = resource.getJsonString("kind");
-//                if (kind != null && "logical".equals(kind.getString())) {
-//                    continue;
-//                }
-//                if (resourceType.equals(resource.getString("resourceType"))) {
-//                    resources.add(resource);
-//                }
-//            }
 
             Collections.sort(resources, new Comparator<JsonObject>() {
                 @Override
@@ -3956,24 +4093,6 @@ public class CodeGenerator {
         }
     }
 
-    private static void loadExtensions(Map<String, JsonObject> objectMap, String extensionsDir, String type) {
-//        log.info("*************** Load Extension: "+extensionsDir);
-        System.out.println("*************** Load Extension: " + extensionsDir);
-        try (Stream<Path> walk = Files.walk(Paths.get(extensionsDir))) {
-//            log.info("*************** innnnn");
-            System.out.println("*************** innnnn");
-            List<String> result = walk.map(x -> x.toString()).filter(f -> f.startsWith("./extensions/" + type)).collect(Collectors.toList());
-
-            result.forEach(f -> {
-                objectMap.putAll(CodeGenerator.buildResourceMap(f, type));
-            });
-            System.out.println("Done");
-
-        } catch (IOException e) {
-//            log.error("Failed to load extensions from "+ extensionsDir, e);
-            System.out.println("Failed to load extensions from " + extensionsDir + e);
-        }
-    }
 
     public static void main(String[] args) throws Exception {
         Map<String, JsonObject> structureDefinitionMap = buildResourceMap("./definitions/profiles-resources.json", "StructureDefinition");

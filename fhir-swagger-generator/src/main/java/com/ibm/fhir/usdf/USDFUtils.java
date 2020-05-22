@@ -15,12 +15,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class USDFUtils {
-    public static void loadExtensions(Map<Class<?>, StructureDefinition> objectMap, String extensionsDir, String type) {
+    public static void loadExtensions(Map<Class<?>, StructureDefinition> objectMap,  String type) {
+        String extensionsDir = USDFConstants.EXTENSIONS_PATH;
 //        log.info("*************** Load Extension: "+extensionsDir);
         System.out.println("*************** Load Extension: " + extensionsDir);
-        try (Stream<Path> walk = Files.walk(Paths.get(USDFConstants.EXTENSIONS_PATH))) {
+        try (Stream<Path> walk = Files.walk(Paths.get(extensionsDir))) {
             List<String> result = walk.map(x -> x.toString()).filter(f -> f.startsWith(
-                    USDFConstants.EXTENSIONS_PATH + "/" + type)).collect(Collectors.toList());
+                    extensionsDir + "/" + type)).collect(Collectors.toList());
 
             result.forEach(f -> {
 //                objectMap.putAll(CodeGenerator.buildResourceMap(f, type));
@@ -56,9 +57,9 @@ public class USDFUtils {
             path += "." + modelClassName;
             pathEnding = modelClassName + "." + elementName;
         }
-        path += "." + elementName;
 
-        if (structureDefinitionName.equals(USDFConstants.COVERAGEPLAN)||structureDefinitionName.equals(USDFConstants.FORMULARYDRUG)){
+        if (structureDefinitionName.equals(USDFConstants.USDF_CLASSNAMES.CoveragePlan.toString())||
+                structureDefinitionName.equals(USDFConstants.USDF_CLASSNAMES.FormularyDrug.toString())){
             path = structureDefinition.getType().getValue()+"."+elementName;
             for (ElementDefinition elementDefinition : structureDefinition.getSnapshot().getElement()) {
                 String elementDefinitionPath = elementDefinition.getPath().getValue();
@@ -87,6 +88,14 @@ public class USDFUtils {
         throw new RuntimeException("Unable to retrieve element definition for " + elementName + " in " + modelClass.getName());
     }
 
+    public static boolean isUSDFModelClass(Class<?> modelClass){
+        if (modelClass.getSimpleName().equals(USDFConstants.USDF_CLASSNAMES.CoveragePlan.toString())||
+                modelClass.getSimpleName().equals(USDFConstants.USDF_CLASSNAMES.FormularyDrug.toString())){
+            //examples are skipped
+            return true;
+        }
+        return false;
+    }
 
 
 
