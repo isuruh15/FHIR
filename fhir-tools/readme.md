@@ -1,0 +1,70 @@
+# FHIR Model Generation Tool for Davinci Drug Formularity Extensions
+- This project is to add support for USDF extensions in FHIR. Currently, under development.
+
+This module reads FHIR definition flies and generate model classes for FHIR resources, types and codemaps.
+It uses the HL7-provided specification artifacts, and the generates java classes to `fhir-model`.
+
+Model classes and required parsers can be generated using this tool. Original source has been modified in order to 
+support Davinci Drug Formularity extensions.
+
+## Setting Up
+
+Put Davinci Drug Formularity artifacts in folder named ./extensions and place it in the root directory of 
+fhir-tool module.
+Then go to fhir-tools module, execute:
+
+```
+mvn clean install
+```
+
+The repo should successfully build without any errors. 
+
+Then navigate to root directory which contains all the modules. (/FHIR) 
+
+```
+cd ..
+```
+
+Execute the following command to generate model classes in `fhir-model` module.
+
+```
+mvn com.ibm.fhir:fhir-tools:generate-model -f ./fhir-model/pom.xml -Dcheckstyle.skip
+```
+
+The repo should successfully build without any errors.
+
+You can skip the checkstyle plugin by adding the following flag to the command.
+
+```
+-Dcheckstyle.skip
+```
+
+## Build `fhir-model`
+
+Before executing the build command, verify whether the new resource files are added properly. 
+
+You need to modify `fhir-model/src/main/java/com/ibm/fhir/model/type/code/ResourceType.java` as follows.
+
+Add following lines to `ValueSet` enum
+`COVERAGEPLAN("CoveragePlan")`
+
+`FORMULARYDRUG("FormularyDrug")`
+
+Then add following methods 
+
+`public static final ResourceType COVERAGEPLAN = ResourceType.builder().value(ValueSet.COVERAGEPLAN).build();`
+
+`public static final ResourceType FORMULARYDRUG = ResourceType.builder().value(ValueSet.FORMULARYDRUG).build();`
+
+Now you can build the `fhir-model` by executing following command in `fhir-model` root directory
+
+`mvn clean install`
+
+## Generating Swagger Definitions
+First, build the required modules together with updated Model classes.
+
+Follow the instructions in `fhir-swagger-genrator` readme.
+
+
+
+FHIR® is the registered trademark of HL7 and is used with the permission of HL7.
