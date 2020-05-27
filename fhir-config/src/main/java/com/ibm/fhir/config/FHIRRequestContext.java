@@ -90,15 +90,15 @@ public class FHIRRequestContext {
 
     /**
      * Setter for the tenant key
-     * @param b64
+     * 
+     * @param base64
      * @throws FHIRException if the given value is not a valid Base64 string
      */
-    public void setTenantKey(String b64) throws FHIRException {
+    public void setTenantKey(String base64) throws FHIRException {
         try {
-            Base64.getDecoder().decode(b64);
-            this.tenantKey = b64;
-        }
-        catch (IllegalArgumentException x) {
+            Base64.getDecoder().decode(base64);
+            this.tenantKey = base64;
+        } catch (IllegalArgumentException x) {
             // Tenant key is a secret, so don't include it in any error message
             throw new FHIRException("Invalid tenantKey.");
         }

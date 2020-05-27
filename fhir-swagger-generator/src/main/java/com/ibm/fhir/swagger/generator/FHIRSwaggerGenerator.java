@@ -57,6 +57,10 @@ import com.ibm.fhir.model.util.ModelSupport;
 import com.ibm.fhir.model.visitor.AbstractVisitable;
 import com.ibm.fhir.openapi.generator.FHIROpenApiGenerator;
 import com.ibm.fhir.search.util.SearchUtil;
+import com.ibm.fhir.usdf.USDFConstants;
+
+import static com.ibm.fhir.usdf.USDFUtils.getElementDefinitionUSDF;
+import static com.ibm.fhir.usdf.USDFUtils.loadExtensions;
 
 /**
  * Generate Swagger 2.0 from the HL7 FHIR R4 artifacts and the IBM FHIR object model.
@@ -301,6 +305,7 @@ public class FHIRSwaggerGenerator {
         try {
             FHIROpenApiGenerator.populateStructureDefinitionMap(structureDefinitionMap, "profiles-resources.json");
             FHIROpenApiGenerator.populateStructureDefinitionMap(structureDefinitionMap, "profiles-types.json");
+            loadExtensions(structureDefinitionMap, USDFConstants.USDF_TYPE_TO_LOAD);
         } catch (Exception e) {
             throw new Error(e);
         }
@@ -1054,7 +1059,8 @@ public class FHIRSwaggerGenerator {
             }
         }
 
-        throw new RuntimeException("Unable to retrieve element definition for " + elementName + " in " + modelClass.getName());
+        return getElementDefinitionUSDF(structureDefinition,modelClass,elementName);
+//        throw new RuntimeException("Unable to retrieve element definition for " + elementName + " in " + modelClass.getName());
     }
 
     private static List<String> getClassNames() {

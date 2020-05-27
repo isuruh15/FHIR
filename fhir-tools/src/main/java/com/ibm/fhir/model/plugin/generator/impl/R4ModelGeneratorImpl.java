@@ -17,6 +17,8 @@ import org.apache.maven.project.MavenProject;
 import com.ibm.fhir.model.plugin.generator.ModelGenerator;
 import com.ibm.fhir.tools.CodeGenerator;
 
+import static com.ibm.fhir.tools.USDFUtils.loadExtensions;
+
 /**
  * Runs in the fhir-tools project 
  * 
@@ -72,12 +74,15 @@ public class R4ModelGeneratorImpl implements ModelGenerator {
                 Map<String, JsonObject> structureDefinitionMap =
                         CodeGenerator.buildResourceMap(definitionsDir + "/profiles-resources.json", "StructureDefinition");
                 structureDefinitionMap.putAll(CodeGenerator.buildResourceMap(definitionsDir + "/profiles-types.json", "StructureDefinition"));
+                loadExtensions(structureDefinitionMap, baseDirectory + "/extensions", "StructureDefinition");
 
                 Map<String, JsonObject> codeSystemMap = CodeGenerator.buildResourceMap(definitionsDir + "/valuesets.json", "CodeSystem");
                 codeSystemMap.putAll(CodeGenerator.buildResourceMap(definitionsDir + "/v3-codesystems.json", "CodeSystem"));
+                loadExtensions(codeSystemMap, baseDirectory + "/extensions", "CodeSystem");
 
                 Map<String, JsonObject> valueSetMap = CodeGenerator.buildResourceMap(definitionsDir + "/valuesets.json", "ValueSet");
                 valueSetMap.putAll(CodeGenerator.buildResourceMap(definitionsDir + "/v3-codesystems.json", "ValueSet"));
+                loadExtensions(valueSetMap, baseDirectory + "/extensions", "ValueSet");
 
                 log.info("[Started] generating the code for fhir-model");
                 CodeGenerator generator = new CodeGenerator(structureDefinitionMap, codeSystemMap, valueSetMap);

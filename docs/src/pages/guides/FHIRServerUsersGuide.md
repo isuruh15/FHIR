@@ -416,6 +416,7 @@ The `connectionProperties` property is a set of driver-specific properties neede
 
 For a Derby-related datasource definition, any bean property supported by the `EmbeddedXADataSource` class can be specified within the `connectionProperties` property group. For more information about the properties supported by the `EmbeddedXADataSource` class, and its super classes, see the [Apache Derby documentation](https://db.apache.org/derby/docs/10.13/publishedapi/org/apache/derby/jdbc/EmbeddedXADataSource.html).
 
+To disable the multitenant feature for a particular offering add to your `fhirServer/persistence/datasources` entry `multitenant` and set false to disable, and true to enable, only for Db2 is the default set to true.
 
 # 4 Customization
 You can modify the default server implementation by taking advantage of the IBM FHIR server's extensibility. The following extension points are available:
@@ -1197,7 +1198,7 @@ BulkData web application writes the exported FHIR resources to an IBM Cloud Obje
     "batch-uri": "https://localhost:9443/ibm/api/batch/jobinstances",
     "batch-user": "fhiradmin",
     "batch-user-password": "change-password",
-    "batch-truststore": "resources/security/fhirTruststore.jks",
+    "batch-truststore": "resources/security/fhirTrustStore.p12",
     "batch-truststore-password": "change-password",
     "isExportPublic": true,
     "validBaseUrls": [

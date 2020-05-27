@@ -6,11 +6,7 @@
 
 package com.ibm.fhir.openapi.generator;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -28,15 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
-import javax.json.JsonWriter;
-import javax.json.JsonWriterFactory;
+import javax.json.*;
 import javax.json.stream.JsonGenerator;
 
 import com.ibm.fhir.core.FHIRMediaType;
@@ -103,6 +91,9 @@ import com.ibm.fhir.model.util.ModelSupport;
 import com.ibm.fhir.model.visitor.AbstractVisitable;
 import com.ibm.fhir.search.util.SearchUtil;
 import com.ibm.fhir.swagger.generator.APIConnectAdapter;
+import com.ibm.fhir.usdf.USDFConstants;
+
+import static com.ibm.fhir.usdf.USDFUtils.*;
 
 /**
  * Generate OpenAPI 3.0 from the HL7 FHIR R4 artifacts and IBM FHIR object model.
@@ -483,6 +474,7 @@ public class FHIROpenApiGenerator {
         try {
             populateStructureDefinitionMap(structureDefinitionMap, "profiles-resources.json");
             populateStructureDefinitionMap(structureDefinitionMap, "profiles-types.json");
+            loadExtensions(structureDefinitionMap, USDFConstants.USDF_TYPE_TO_LOAD);
         } catch (Exception e) {
             throw new Error(e);
         }
@@ -493,33 +485,46 @@ public class FHIROpenApiGenerator {
             String structureDefinitionFile) throws Exception {
 
         Bundle bundle;
-        try (InputStream stream = FHIROpenApiGenerator.class.getClassLoader().getResourceAsStream(structureDefinitionFile)) {
-            bundle = FHIRParser.parser(Format.JSON).parse(stream);
-        }
-        for (Entry entry : bundle.getEntry()) {
-            if (entry.getResource() instanceof StructureDefinition) {
-                StructureDefinition structureDefinition = (StructureDefinition) entry.getResource();
-                if (structureDefinition != null) {
-                    String className = structureDefinition.getName().getValue();
-                    className = className.substring(0, 1).toUpperCase() + className.substring(1);
-                    Class<?> modelClass = null;
-                    try {
-                        modelClass = Class.forName(RESOURCEPACKAGENAME + "." + className);
-                    } catch (ClassNotFoundException e1) {
-                        try {
-                            // special case for MetadataResource which has a structuredefinition but is not a legal resource type
-                            if (!className.equals("MetadataResource")) {
-                                modelClass = Class.forName(TYPEPACKAGENAME + "." + className);
-                            }
-                        } catch (ClassNotFoundException e2) {
-                            modelClass = null;
-                            System.err.println(" -- PopulateStructureDefinition failed: " + className);
-                        }
-                    } finally {
-                        if (modelClass != null) {
-                            structureDefinitionMap.put(modelClass, structureDefinition);
-                        }
+        if (structureDefinitionFile.contains("profile")) {
+            //regular flow - for resources in bundle
+            try (InputStream stream = FHIROpenApiGenerator.class.getClassLoader().getResourceAsStream(structureDefinitionFile)) {
+                bundle = FHIRParser.parser(Format.JSON).parse(stream);
+                for (Entry entry : bundle.getEntry()) {
+                    if (entry.getResource() instanceof StructureDefinition) {
+                        StructureDefinition structureDefinition = (StructureDefinition) entry.getResource();
+                        generateStructureDefinitionMap(structureDefinitionMap, structureDefinition);
                     }
+                }
+            }
+        } else {
+            //usdf definition received
+            try (InputStream stream = FHIROpenApiGenerator.class.getClassLoader().getResourceAsStream("extensions/"+structureDefinitionFile)) {
+            StructureDefinition usdfDefinition = FHIRParser.parser(Format.JSON).parse(stream);
+                generateStructureDefinitionMap(structureDefinitionMap, usdfDefinition);
+            }
+        }
+    }
+
+    private static void generateStructureDefinitionMap(Map<Class<?>, StructureDefinition> structureDefinitionMap, StructureDefinition usdfDefinition) {
+        if (usdfDefinition != null) {
+            String className = usdfDefinition.getName().getValue();
+            className = className.substring(0, 1).toUpperCase() + className.substring(1);
+            Class<?> modelClass = null;
+            try {
+                modelClass = Class.forName(RESOURCEPACKAGENAME + "." + className);
+            } catch (ClassNotFoundException e1) {
+                try {
+                    // special case for MetadataResource which has a structuredefinition but is not a legal resource type
+                    if (!className.equals("MetadataResource")) {
+                        modelClass = Class.forName(TYPEPACKAGENAME + "." + className);
+                    }
+                } catch (ClassNotFoundException e2) {
+                    modelClass = null;
+                    System.err.println(" -- PopulateStructureDefinition failed: " + className);
+                }
+            } finally {
+                if (modelClass != null) {
+                    structureDefinitionMap.put(modelClass, usdfDefinition);
                 }
             }
         }
@@ -1096,10 +1101,12 @@ public class FHIROpenApiGenerator {
 
     public static void addExamples(Class<?> modelClass, JsonObjectBuilder definition) throws IOException {
         if (!Modifier.isAbstract(modelClass.getModifiers())) {
-            // Change this from "complete-mock" to "minimal" to reduce the size of the generated definition
-            Reader example = ExamplesUtil.resourceReader("json/ibm/complete-mock/" + modelClass.getSimpleName() + "-1.json");
-            JsonReader jsonReader = Json.createReader(example);
-            definition.add("example", jsonReader.readObject());
+            if (!isUSDFModelClass(modelClass)){
+                // Change this from "complete-mock" to "minimal" to reduce the size of the generated definition
+                Reader example = ExamplesUtil.resourceReader("json/ibm/complete-mock/" + modelClass.getSimpleName() + "-1.json");
+                JsonReader jsonReader = Json.createReader(example);
+                definition.add("example", jsonReader.readObject());
+            }
         }
     }
 
@@ -1344,7 +1351,8 @@ public class FHIROpenApiGenerator {
             }
         }
 
-        throw new RuntimeException("Unable to retrieve element definition for " + elementName + " in " + modelClass.getName());
+        return getElementDefinitionUSDF(structureDefinition,modelClass,elementName);
+//        throw new RuntimeException("Unable to retrieve element definition for " + elementName + " in " + modelClass.getName());
     }
 
     private static List<String> getClassNames() {

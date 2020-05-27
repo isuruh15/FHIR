@@ -52,6 +52,7 @@ import com.ibm.fhir.database.utils.derby.DerbyAdapter;
 import com.ibm.fhir.database.utils.derby.DerbyPropertyAdapter;
 import com.ibm.fhir.database.utils.derby.DerbyTranslator;
 import com.ibm.fhir.database.utils.model.DatabaseObjectType;
+import com.ibm.fhir.database.utils.model.DbType;
 import com.ibm.fhir.database.utils.model.PhysicalDataModel;
 import com.ibm.fhir.database.utils.model.Tenant;
 import com.ibm.fhir.database.utils.pool.PoolConnectionProvider;
@@ -71,7 +72,6 @@ import com.ibm.fhir.schema.control.GetResourceTypeList;
 import com.ibm.fhir.schema.control.OAuthSchemaGenerator;
 import com.ibm.fhir.schema.control.PopulateParameterNames;
 import com.ibm.fhir.schema.control.PopulateResourceTypes;
-import com.ibm.fhir.schema.model.DbType;
 import com.ibm.fhir.schema.model.ResourceType;
 import com.ibm.fhir.task.api.ITaskCollector;
 import com.ibm.fhir.task.api.ITaskGroup;
@@ -94,6 +94,7 @@ public class Main {
 
     // Indicates if the feature is enabled for the DbType
     public List<DbType> MULTITENANT_FEATURE_ENABLED = Arrays.asList(DbType.DB2);
+    public List<DbType> STORED_PROCEDURE_ENABLED = Arrays.asList(DbType.DB2, DbType.POSTGRESQL);
 
     // Properties accumulated as we parse args and read configuration files
     private final Properties properties = new Properties();
@@ -180,7 +181,8 @@ public class Main {
                     DataDefinitionUtil.assertValidName(args[i]);
 
                     // Force upper-case to avoid tricky-to-catch errors related to quoting names
-                    this.schemaName = args[i].toUpperCase();
+                    //this.schemaName = args[i].toUpperCase();
+                    this.schemaName = args[i];
 
                     if (!schemaName.equals(args[i])) {
                         logger.info("Schema name forced to upper case: " + schemaName);
@@ -562,12 +564,10 @@ public class Main {
      * Update the schema
      */
     protected void updateSchema() {
-
         // Build/update the FHIR-related tables as well as the stored procedures
         FhirSchemaGenerator gen = new FhirSchemaGenerator(adminSchemaName, schemaName);
         PhysicalDataModel pdm = new PhysicalDataModel();
         gen.buildSchema(pdm);
-        gen.buildProcedures(pdm);
 
         // Build/update the Liberty OAuth-related tables
         if (updateOauthSchema) {
@@ -590,20 +590,21 @@ public class Main {
         CreateVersionHistory.createTableIfNeeded(adminSchemaName, adapter);
 
         // Current version history for the data schema
-        VersionHistoryService vhs = new VersionHistoryService(adminSchemaName, schemaName);
+        VersionHistoryService vhs = new VersionHistoryService(adminSchemaName, schemaName, oauthSchemaName);
         vhs.setTransactionProvider(transactionProvider);
         vhs.setTarget(adapter);
         vhs.init();
 
         // Use the version history service to determine if this table existed before we run `applyWithHistory`
-        boolean newDb = vhs.getVersion(schemaName, DatabaseObjectType.TABLE.name(), "PARAMETER_NAMES") == null;
+        boolean newDb = vhs.getVersion(schemaName, DatabaseObjectType.TABLE.name(), "PARAMETER_NAMES") == null || 
+                vhs.getVersion(schemaName, DatabaseObjectType.TABLE.name(), "PARAMETER_NAMES") == 0;
 
         applyModel(pdm, adapter, collector, vhs);
         // There is a working data model at this point.
 
         // If the db is multi-tenant, we populate the resource types and parameter names in allocate-tenant.
         // Otherwise, if its a new schema, populate the resource types and parameters names (codes) now
-        if (!MULTITENANT_FEATURE_ENABLED.contains(dbType) && newDb) {
+        if (!MULTITENANT_FEATURE_ENABLED.contains(dbType) && newDb ) {
             populateResourceTypeAndParameterNameTableEntries(null);
         }
     }
@@ -638,7 +639,7 @@ public class Main {
      * into the FHIR resource tables
      */
     protected void updateProcedures() {
-        if (!MULTITENANT_FEATURE_ENABLED.contains(dbType)) {
+        if (!STORED_PROCEDURE_ENABLED.contains(dbType)) {
             return;
         }
         FhirSchemaGenerator gen = new FhirSchemaGenerator(adminSchemaName, schemaName);
@@ -651,7 +652,7 @@ public class Main {
             try (Connection c = createConnection()) {
                 try {
                     JdbcTarget target = new JdbcTarget(c);
-                    Db2Adapter adapter = new Db2Adapter(target);
+                    IDatabaseAdapter adapter = getDbAdapter(target);
                     pdm.applyProcedures(adapter);
                 } catch (Exception x) {
                     c.rollback();
@@ -893,7 +894,7 @@ public class Main {
                 final String sql =
                         "SELECT t.tenant_status FROM fhir_admin.tenants t WHERE t.tenant_name = ? "
                                 + "AND EXISTS (SELECT 1 FROM fhir_admin.tenant_keys tk WHERE tk.mt_id = t.mt_id "
-                                + "AND tk.tenant_hash = sysibm.hash(tk.tenant_salt || ?, 2));";
+                                + "AND tk.tenant_hash = sysibm.hash(tk.tenant_salt || ?, 2))";
                 try (PreparedStatement stmt = connectionPool.getConnection().prepareStatement(sql)) {
                     stmt.setString(1, tenantName);
                     stmt.setString(2, tenantKey);

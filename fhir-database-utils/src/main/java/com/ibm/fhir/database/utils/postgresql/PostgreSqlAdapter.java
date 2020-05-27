@@ -149,8 +149,25 @@ public class PostgreSqlAdapter extends CommonDatabaseAdapter {
     }
 
     @Override
-    public void createOrReplaceProcedure(String schemaName, String procedureName, Supplier<String> supplier) {
-        warnOnce(MessageKey.CREATE_PROC, "Create procedure not supported in PostgreSql");
+    public void createOrReplaceProcedureAndFunctions(String schemaName, String procedureName, Supplier<String> supplier) {
+        final String objectName = DataDefinitionUtil.getQualifiedName(schemaName, procedureName);
+        logger.info("Create or replace procedure " + objectName);
+
+        // Build the create procedure DDL and apply it
+        // Because postgresql version 12 doesn't support OUT parameter yet, so we use Function with exactly the similar
+        // parameters as DB2 stored procedures for now.
+        final StringBuilder ddl = new StringBuilder()
+                .append("CREATE OR REPLACE FUNCTION ")
+                .append(objectName)
+                .append(System.lineSeparator())
+                .append(supplier.get());
+
+        final String ddlString = ddl.toString();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine(ddlString);
+        }
+
+        runStatement(ddlString);
     }
 
     @Override
@@ -230,10 +247,11 @@ public class PostgreSqlAdapter extends CommonDatabaseAdapter {
             String targetSchema, String targetTable, String tenantColumnName,
             List<String> columns, boolean enforced) {
 
-        // Make the call, but
-        // 1. without the tenantColumnName because PostgreSql doesn't support our multi-tenant implementation; and
-        // 2. with enforced=true because PostgreSql doesn't support non-default constraint characteristics
-        super.createForeignKeyConstraint(constraintName, schemaName, name, targetSchema, targetTable, null, columns, true);
+        // If enforced=false, skip the constraint because PostgreSQL doesn't support unenforced constraints
+        if (enforced) {
+            // Make the call, but without the tenantColumnName because PostgreSQL doesn't support our multi-tenant implementation
+            super.createForeignKeyConstraint(constraintName, schemaName, name, targetSchema, targetTable, null, columns, true);
+        }
     }
 
     @Override

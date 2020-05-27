@@ -417,6 +417,10 @@ public class FHIRJsonParser extends FHIRAbstractParser {
             return parseVerificationResult(elementName, jsonObject, elementIndex);
         case "VisionPrescription":
             return parseVisionPrescription(elementName, jsonObject, elementIndex);
+        case "CoveragePlan":
+            return parseCoveragePlan(elementName, jsonObject, elementIndex);
+        case "FormularyDrug":
+            return parseFormularyDrug(elementName, jsonObject, elementIndex);
         }
         return null;
     }
@@ -1532,6 +1536,10 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         JsonArray entryArray = getJsonArray(jsonObject, "entry");
         if (entryArray != null) {
             for (int i = 0; i < entryArray.size(); i++) {
+
+
+
+
                 builder.entry(parseBundleEntry("entry", entryArray.getJsonObject(i), i));
             }
         }
@@ -5951,6 +5959,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         return builder.build();
     }
 
+    private CoveragePlan parseCoveragePlan(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(CoveragePlan.class, jsonObject);
+        }
+        CoveragePlan.Builder builder = CoveragePlan.builder();
+        parseDomainResource(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
     private DataRequirement parseDataRequirement(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
         if (jsonObject == null) {
             return null;
@@ -7134,7 +7156,10 @@ public class FHIRJsonParser extends FHIRAbstractParser {
 
     private void parseDomainResource(DomainResource.Builder builder, JsonObject jsonObject) {
         parseResource(builder, jsonObject);
-        builder.text(parseNarrative("text", getJsonValue(jsonObject, "text", JsonObject.class), -1));
+        if (!jsonObject.getString("name").equals("CoveragePlan")&&!jsonObject.getString("name").equals("FormularyDrug")){
+            builder.text(parseNarrative("text", getJsonValue(jsonObject, "text", JsonObject.class), -1));
+        }
+//        builder.text(parseNarrative("text", getJsonValue(jsonObject, "text", JsonObject.class), -1));
         JsonArray containedArray = getJsonArray(jsonObject, "contained");
         if (containedArray != null) {
             for (int i = 0; i < containedArray.size(); i++) {
@@ -7205,6 +7230,48 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         builder.type(parseCodeableConcept("type", getJsonValue(jsonObject, "type", JsonObject.class), -1));
         builder.dose(parseChoiceElement("dose", jsonObject, Range.class, SimpleQuantity.class));
         builder.rate(parseChoiceElement("rate", jsonObject, Ratio.class, Range.class, SimpleQuantity.class));
+        stackPop();
+        return builder.build();
+    }
+
+    private DrugAlternatives parseDrugAlternatives(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(DrugAlternatives.class, jsonObject);
+        }
+        DrugAlternatives.Builder builder = DrugAlternatives.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
+    private DrugTierDefinition parseDrugTierDefinition(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(DrugTierDefinition.class, jsonObject);
+        }
+        DrugTierDefinition.Builder builder = DrugTierDefinition.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
+    private DrugTierID parseDrugTierID(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(DrugTierID.class, jsonObject);
+        }
+        DrugTierID.Builder builder = DrugTierID.builder();
+        parseElement(builder, jsonObject);
         stackPop();
         return builder.build();
     }
@@ -7725,6 +7792,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
             }
         }
         builder.versioning((ReferenceVersionRules) parseString(ReferenceVersionRules.builder(), "versioning", getJsonValue(jsonObject, "versioning", JsonString.class), jsonObject.get("_versioning"), -1));
+        stackPop();
+        return builder.build();
+    }
+
+    private EmailPlanContact parseEmailPlanContact(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(EmailPlanContact.class, jsonObject);
+        }
+        EmailPlanContact.Builder builder = EmailPlanContact.builder();
+        parseElement(builder, jsonObject);
         stackPop();
         return builder.build();
     }
@@ -9690,6 +9771,34 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         builder.period(parsePeriod("period", getJsonValue(jsonObject, "period", JsonObject.class), -1));
         builder.encounter(parseReference("encounter", getJsonValue(jsonObject, "encounter", JsonObject.class), -1));
         builder.author(parseReference("author", getJsonValue(jsonObject, "author", JsonObject.class), -1));
+        stackPop();
+        return builder.build();
+    }
+
+    private FormularyDrug parseFormularyDrug(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(FormularyDrug.class, jsonObject);
+        }
+        FormularyDrug.Builder builder = FormularyDrug.builder();
+        parseDomainResource(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
+    private FormularyURL parseFormularyURL(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(FormularyURL.class, jsonObject);
+        }
+        FormularyURL.Builder builder = FormularyURL.builder();
+        parseElement(builder, jsonObject);
         stackPop();
         return builder.build();
     }
@@ -11821,6 +11930,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         builder.status(parseCodeableConcept("status", getJsonValue(jsonObject, "status", JsonObject.class), -1));
         builder.dateRange(parsePeriod("dateRange", getJsonValue(jsonObject, "dateRange", JsonObject.class), -1));
         builder.restoreDate(parseDateTime("restoreDate", getJsonValue(jsonObject, "restoreDate", JsonString.class), jsonObject.get("_restoreDate"), -1));
+        stackPop();
+        return builder.build();
+    }
+
+    private MarketingURL parseMarketingURL(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(MarketingURL.class, jsonObject);
+        }
+        MarketingURL.Builder builder = MarketingURL.builder();
+        parseElement(builder, jsonObject);
         stackPop();
         return builder.build();
     }
@@ -14845,6 +14968,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         return builder.build();
     }
 
+    private Network parseNetwork(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(Network.class, jsonObject);
+        }
+        Network.Builder builder = Network.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
     private NutritionOrder parseNutritionOrder(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
         if (jsonObject == null) {
             return null;
@@ -16411,6 +16548,34 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         return builder.build();
     }
 
+    private PlanID parsePlanID(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(PlanID.class, jsonObject);
+        }
+        PlanID.Builder builder = PlanID.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
+    private PlanIDType parsePlanIDType(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(PlanIDType.class, jsonObject);
+        }
+        PlanIDType.Builder builder = PlanIDType.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
     private Population parsePopulation(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
         if (jsonObject == null) {
             return null;
@@ -16620,6 +16785,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         parseBackboneElement(builder, jsonObject);
         builder.description(parseString("description", getJsonValue(jsonObject, "description", JsonString.class), jsonObject.get("_description"), -1));
         builder.during(parsePeriod("during", getJsonValue(jsonObject, "during", JsonObject.class), -1));
+        stackPop();
+        return builder.build();
+    }
+
+    private PriorAuthorization parsePriorAuthorization(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(PriorAuthorization.class, jsonObject);
+        }
+        PriorAuthorization.Builder builder = PriorAuthorization.builder();
+        parseElement(builder, jsonObject);
         stackPop();
         return builder.build();
     }
@@ -16971,6 +17150,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
 
     private Quantity parseQuantity(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
         return parseQuantity(Quantity.builder(), elementName, jsonObject, elementIndex);
+    }
+
+    private QuantityLimit parseQuantityLimit(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(QuantityLimit.class, jsonObject);
+        }
+        QuantityLimit.Builder builder = QuantityLimit.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
     }
 
     private Questionnaire parseQuestionnaire(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
@@ -18950,6 +19143,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         return builder.build();
     }
 
+    private StepTherapyLimit parseStepTherapyLimit(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(StepTherapyLimit.class, jsonObject);
+        }
+        StepTherapyLimit.Builder builder = StepTherapyLimit.builder();
+        parseElement(builder, jsonObject);
+        stackPop();
+        return builder.build();
+    }
+
     private String parseString(String.Builder builder, java.lang.String elementName, JsonValue jsonValue, JsonValue _jsonValue, int elementIndex) {
         if (jsonValue == null && _jsonValue == null) {
             return null;
@@ -20494,6 +20701,20 @@ public class FHIRJsonParser extends FHIRAbstractParser {
         builder.type(parseCodeableConcept("type", getJsonValue(jsonObject, "type", JsonObject.class), -1));
         builder.representation(parseString("representation", getJsonValue(jsonObject, "representation", JsonString.class), jsonObject.get("_representation"), -1));
         builder.attachment(parseAttachment("attachment", getJsonValue(jsonObject, "attachment", JsonObject.class), -1));
+        stackPop();
+        return builder.build();
+    }
+
+    private SummaryURL parseSummaryURL(java.lang.String elementName, JsonObject jsonObject, int elementIndex) {
+        if (jsonObject == null) {
+            return null;
+        }
+        stackPush(elementName, elementIndex);
+        if (getPropertyOrDefault(FHIRParser.PROPERTY_IGNORE_UNRECOGNIZED_ELEMENTS, java.lang.Boolean.FALSE, java.lang.Boolean.class) == false) {
+            checkForUnrecognizedElements(SummaryURL.class, jsonObject);
+        }
+        SummaryURL.Builder builder = SummaryURL.builder();
+        parseElement(builder, jsonObject);
         stackPop();
         return builder.build();
     }
@@ -22455,6 +22676,30 @@ public class FHIRJsonParser extends FHIRAbstractParser {
                 return parseUsageContext(elementName, (JsonObject) jsonValue, -1);
             case "Dosage":
                 return parseDosage(elementName, (JsonObject) jsonValue, -1);
+            case "DrugAlternatives":
+                return parseDrugAlternatives(elementName, (JsonObject) jsonValue, -1);
+            case "DrugTierDefinition":
+                return parseDrugTierDefinition(elementName, (JsonObject) jsonValue, -1);
+            case "DrugTierID":
+                return parseDrugTierID(elementName, (JsonObject) jsonValue, -1);
+            case "FormularyURL":
+                return parseFormularyURL(elementName, (JsonObject) jsonValue, -1);
+            case "MarketingURL":
+                return parseMarketingURL(elementName, (JsonObject) jsonValue, -1);
+            case "Network":
+                return parseNetwork(elementName, (JsonObject) jsonValue, -1);
+            case "PlanID":
+                return parsePlanID(elementName, (JsonObject) jsonValue, -1);
+            case "PlanIDType":
+                return parsePlanIDType(elementName, (JsonObject) jsonValue, -1);
+            case "PriorAuthorization":
+                return parsePriorAuthorization(elementName, (JsonObject) jsonValue, -1);
+            case "QuantityLimit":
+                return parseQuantityLimit(elementName, (JsonObject) jsonValue, -1);
+            case "StepTherapyLimit":
+                return parseStepTherapyLimit(elementName, (JsonObject) jsonValue, -1);
+            case "SummaryURL":
+                return parseSummaryURL(elementName, (JsonObject) jsonValue, -1);
             }
         }
 
