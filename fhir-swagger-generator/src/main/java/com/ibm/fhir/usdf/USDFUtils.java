@@ -27,7 +27,7 @@ public class USDFUtils {
 //                objectMap.putAll(CodeGenerator.buildResourceMap(f, type));
                 try {
                     //element in the index 4 has the class name (u)
-                    FHIROpenApiGenerator.populateStructureDefinitionMap(objectMap,f.split("/")[4]);
+                    FHIROpenApiGenerator.populateStructureDefinitionMap(objectMap,f.split("/")[9]);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
