@@ -19,6 +19,9 @@ import javax.annotation.Generated;
 @System("http://hl7.org/fhir/resource-types")
 @Generated("com.ibm.fhir.tools.CodeGenerator")
 public class ResourceType extends Code {
+    public static final ResourceType COVERAGEPLAN = ResourceType.builder().value(ValueSet.COVERAGEPLAN).build();
+
+    public static final ResourceType FORMULARYDRUG = ResourceType.builder().value(ValueSet.FORMULARYDRUG).build();
     /**
      * Account
      * 
@@ -1603,6 +1606,9 @@ public class ResourceType extends Code {
     }
 
     public enum ValueSet {
+        COVERAGEPLAN("CoveragePlan"),
+
+        FORMULARYDRUG("FormularyDrug"),
         /**
          * Account
          * 

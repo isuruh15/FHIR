@@ -53,7 +53,7 @@ public class MedicationKnowledge extends DomainResource {
         description = "A coded concept that defines the type of a medication.",
         valueSet = "http://hl7.org/fhir/ValueSet/medication-codes"
     )
-    private final CodeableConcept code;
+    protected final CodeableConcept code;
     @Summary
     @Binding(
         bindingName = "MedicationKnowledgeStatus",
@@ -61,47 +61,47 @@ public class MedicationKnowledge extends DomainResource {
         description = "A coded concept defining if the medication is in active use.",
         valueSet = "http://hl7.org/fhir/ValueSet/medicationknowledge-status|4.0.1"
     )
-    private final MedicationKnowledgeStatus status;
+    protected final MedicationKnowledgeStatus status;
     @Summary
     @ReferenceTarget({ "Organization" })
-    private final Reference manufacturer;
+    protected final Reference manufacturer;
     @Binding(
         bindingName = "MedicationForm",
         strength = BindingStrength.ValueSet.EXAMPLE,
         description = "A coded concept defining the form of a medication.",
         valueSet = "http://hl7.org/fhir/ValueSet/medication-form-codes"
     )
-    private final CodeableConcept doseForm;
+    protected final CodeableConcept doseForm;
     @Summary
-    private final SimpleQuantity amount;
+    protected final SimpleQuantity amount;
     @Summary
-    private final List<String> synonym;
-    private final List<RelatedMedicationKnowledge> relatedMedicationKnowledge;
-    private final List<Reference> associatedMedication;
-    private final List<CodeableConcept> productType;
-    private final List<Monograph> monograph;
-    private final List<Ingredient> ingredient;
-    private final Markdown preparationInstruction;
+    protected final List<String> synonym;
+    protected final List<RelatedMedicationKnowledge> relatedMedicationKnowledge;
+    protected final List<Reference> associatedMedication;
+    protected final List<CodeableConcept> productType;
+    protected final List<Monograph> monograph;
+    protected final List<Ingredient> ingredient;
+    protected final Markdown preparationInstruction;
     @Binding(
         bindingName = "MedicationRoute",
         strength = BindingStrength.ValueSet.EXAMPLE,
         description = "A coded concept defining the intended route of administration.",
         valueSet = "http://hl7.org/fhir/ValueSet/route-codes"
     )
-    private final List<CodeableConcept> intendedRoute;
-    private final List<Cost> cost;
-    private final List<MonitoringProgram> monitoringProgram;
-    private final List<AdministrationGuidelines> administrationGuidelines;
-    private final List<MedicineClassification> medicineClassification;
-    private final Packaging packaging;
-    private final List<DrugCharacteristic> drugCharacteristic;
-    private final List<Reference> contraindication;
-    private final List<Regulatory> regulatory;
-    private final List<Kinetics> kinetics;
+    protected final List<CodeableConcept> intendedRoute;
+    protected final List<Cost> cost;
+    protected final List<MonitoringProgram> monitoringProgram;
+    protected final List<AdministrationGuidelines> administrationGuidelines;
+    protected final List<MedicineClassification> medicineClassification;
+    protected final Packaging packaging;
+    protected final List<DrugCharacteristic> drugCharacteristic;
+    protected final List<Reference> contraindication;
+    protected final List<Regulatory> regulatory;
+    protected final List<Kinetics> kinetics;
 
     private volatile int hashCode;
 
-    private MedicationKnowledge(Builder builder) {
+    protected MedicationKnowledge(Builder builder) {
         super(builder);
         code = builder.code;
         status = builder.status;
@@ -522,30 +522,30 @@ public class MedicationKnowledge extends DomainResource {
     }
 
     public static class Builder extends DomainResource.Builder {
-        private CodeableConcept code;
-        private MedicationKnowledgeStatus status;
-        private Reference manufacturer;
-        private CodeableConcept doseForm;
-        private SimpleQuantity amount;
-        private List<String> synonym = new ArrayList<>();
-        private List<RelatedMedicationKnowledge> relatedMedicationKnowledge = new ArrayList<>();
-        private List<Reference> associatedMedication = new ArrayList<>();
-        private List<CodeableConcept> productType = new ArrayList<>();
-        private List<Monograph> monograph = new ArrayList<>();
-        private List<Ingredient> ingredient = new ArrayList<>();
-        private Markdown preparationInstruction;
-        private List<CodeableConcept> intendedRoute = new ArrayList<>();
-        private List<Cost> cost = new ArrayList<>();
-        private List<MonitoringProgram> monitoringProgram = new ArrayList<>();
-        private List<AdministrationGuidelines> administrationGuidelines = new ArrayList<>();
-        private List<MedicineClassification> medicineClassification = new ArrayList<>();
-        private Packaging packaging;
-        private List<DrugCharacteristic> drugCharacteristic = new ArrayList<>();
-        private List<Reference> contraindication = new ArrayList<>();
-        private List<Regulatory> regulatory = new ArrayList<>();
-        private List<Kinetics> kinetics = new ArrayList<>();
+        protected CodeableConcept code;
+        protected MedicationKnowledgeStatus status;
+        protected Reference manufacturer;
+        protected CodeableConcept doseForm;
+        protected SimpleQuantity amount;
+        protected List<String> synonym = new ArrayList<>();
+        protected List<RelatedMedicationKnowledge> relatedMedicationKnowledge = new ArrayList<>();
+        protected List<Reference> associatedMedication = new ArrayList<>();
+        protected List<CodeableConcept> productType = new ArrayList<>();
+        protected List<Monograph> monograph = new ArrayList<>();
+        protected List<Ingredient> ingredient = new ArrayList<>();
+        protected Markdown preparationInstruction;
+        protected List<CodeableConcept> intendedRoute = new ArrayList<>();
+        protected List<Cost> cost = new ArrayList<>();
+        protected List<MonitoringProgram> monitoringProgram = new ArrayList<>();
+        protected List<AdministrationGuidelines> administrationGuidelines = new ArrayList<>();
+        protected List<MedicineClassification> medicineClassification = new ArrayList<>();
+        protected Packaging packaging;
+        protected List<DrugCharacteristic> drugCharacteristic = new ArrayList<>();
+        protected List<Reference> contraindication = new ArrayList<>();
+        protected List<Regulatory> regulatory = new ArrayList<>();
+        protected List<Kinetics> kinetics = new ArrayList<>();
 
-        private Builder() {
+        protected Builder() {
             super();
         }
 

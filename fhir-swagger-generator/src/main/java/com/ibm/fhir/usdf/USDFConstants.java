@@ -5,6 +5,7 @@ public class USDFConstants {
 
     //additional constants
     public static final String NESTED_ELEMENT_CLASSNAME_COVERAGEPLAN_ENTRY = "com.ibm.fhir.model.resource.CoveragePlan$Entry";
+    public static final String NESTED_ELEMENT_CLASSNAME_COVERAGEPLAN_COMMON = "com.ibm.fhir.model.resource.CoveragePlan$";
     public static final String NESTED_ELEMENT_CLASSNAME_FORMULARYDRUG_COMMON = "com.ibm.fhir.model.resource.FormularyDrug$";
     public static final String ELEMENT_SPECIAL_MEDKNOWLEDGE_VALUE = "MedicationKnowledge.drugCharacteristic.value[x]";
 

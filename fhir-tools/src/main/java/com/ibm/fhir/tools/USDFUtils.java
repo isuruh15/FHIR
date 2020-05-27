@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.json.JsonObject;
 
+import static com.ibm.fhir.tools.USDFConstants.METHODTOSKIPXHTML;
+
 /**
  *
  */
@@ -75,6 +77,10 @@ public class USDFUtils {
 //            log.error("Failed to load extensions from "+ extensionsDir, e);
             System.out.println("Failed to load extensions from " + extensionsDir + e);
         }
+    }
+
+    public static boolean isSkipNarrative(String fieldName) {
+        return fieldName.equals(METHODTOSKIPXHTML) ? true : false;
     }
 
 

@@ -17,6 +17,7 @@ class USDFConstants {
 
     public static final String FULLCLASSNAMELIST = "com.ibm.fhir.model.resource.List";
     public static final boolean ENABLEXML = false; //enable after adding support for usdf
+    public static final String METHODTOSKIPXHTML = "div";
 
 
 }

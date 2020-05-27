@@ -63,7 +63,7 @@ import com.ibm.fhir.model.visitor.Visitor;
 )
 @Generated("com.ibm.fhir.tools.CodeGenerator")
 public class List extends DomainResource {
-    private final java.util.List<Identifier> identifier;
+    protected final java.util.List<Identifier> identifier;
     @Summary
     @Binding(
         bindingName = "ListStatus",
@@ -72,7 +72,7 @@ public class List extends DomainResource {
         valueSet = "http://hl7.org/fhir/ValueSet/list-status|4.0.1"
     )
     @Required
-    private final ListStatus status;
+    protected final ListStatus status;
     @Summary
     @Binding(
         bindingName = "ListMode",
@@ -81,9 +81,9 @@ public class List extends DomainResource {
         valueSet = "http://hl7.org/fhir/ValueSet/list-mode|4.0.1"
     )
     @Required
-    private final ListMode mode;
+    protected final ListMode mode;
     @Summary
-    private final String title;
+    protected final String title;
     @Summary
     @Binding(
         bindingName = "ListPurpose",
@@ -91,37 +91,37 @@ public class List extends DomainResource {
         description = "What the purpose of a list is.",
         valueSet = "http://hl7.org/fhir/ValueSet/list-example-codes"
     )
-    private final CodeableConcept code;
+    protected final CodeableConcept code;
     @Summary
     @ReferenceTarget({ "Patient", "Group", "Device", "Location" })
-    private final Reference subject;
+    protected final Reference subject;
     @ReferenceTarget({ "Encounter" })
-    private final Reference encounter;
+    protected final Reference encounter;
     @Summary
-    private final DateTime date;
+    protected final DateTime date;
     @Summary
     @ReferenceTarget({ "Practitioner", "PractitionerRole", "Patient", "Device" })
-    private final Reference source;
+    protected final Reference source;
     @Binding(
         bindingName = "ListOrder",
         strength = BindingStrength.ValueSet.PREFERRED,
         description = "What order applies to the items in a list.",
         valueSet = "http://hl7.org/fhir/ValueSet/list-order"
     )
-    private final CodeableConcept orderedBy;
-    private final java.util.List<Annotation> note;
-    private final java.util.List<Entry> entry;
+    protected final CodeableConcept orderedBy;
+    protected final java.util.List<Annotation> note;
+    protected final java.util.List<Entry> entry;
     @Binding(
         bindingName = "ListEmptyReason",
         strength = BindingStrength.ValueSet.PREFERRED,
         description = "If a list is empty, why it is empty.",
         valueSet = "http://hl7.org/fhir/ValueSet/list-empty-reason"
     )
-    private final CodeableConcept emptyReason;
+    protected final CodeableConcept emptyReason;
 
     private volatile int hashCode;
 
-    private List(Builder builder) {
+    protected List(Builder builder) {
         super(builder);
         identifier = Collections.unmodifiableList(ValidationSupport.requireNonNull(builder.identifier, "identifier"));
         status = ValidationSupport.requireNonNull(builder.status, "status");
@@ -401,21 +401,21 @@ public class List extends DomainResource {
     }
 
     public static class Builder extends DomainResource.Builder {
-        private java.util.List<Identifier> identifier = new ArrayList<>();
-        private ListStatus status;
-        private ListMode mode;
-        private String title;
-        private CodeableConcept code;
-        private Reference subject;
-        private Reference encounter;
-        private DateTime date;
-        private Reference source;
-        private CodeableConcept orderedBy;
-        private java.util.List<Annotation> note = new ArrayList<>();
-        private java.util.List<Entry> entry = new ArrayList<>();
-        private CodeableConcept emptyReason;
+        protected java.util.List<Identifier> identifier = new ArrayList<>();
+        protected ListStatus status;
+        protected ListMode mode;
+        protected String title;
+        protected CodeableConcept code;
+        protected Reference subject;
+        protected Reference encounter;
+        protected DateTime date;
+        protected Reference source;
+        protected CodeableConcept orderedBy;
+        protected java.util.List<Annotation> note = new ArrayList<>();
+        protected java.util.List<Entry> entry = new ArrayList<>();
+        protected CodeableConcept emptyReason;
 
-        private Builder() {
+        protected Builder() {
             super();
         }
 

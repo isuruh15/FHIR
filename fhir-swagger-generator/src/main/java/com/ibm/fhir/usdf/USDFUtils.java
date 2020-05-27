@@ -70,7 +70,8 @@ public class USDFUtils {
             }
         }
         if (modelClass.getName().equals(USDFConstants.NESTED_ELEMENT_CLASSNAME_COVERAGEPLAN_ENTRY)||
-                modelClass.getName().startsWith(USDFConstants.NESTED_ELEMENT_CLASSNAME_FORMULARYDRUG_COMMON)
+                modelClass.getName().startsWith(USDFConstants.NESTED_ELEMENT_CLASSNAME_FORMULARYDRUG_COMMON) ||
+                modelClass.getName().startsWith(USDFConstants.NESTED_ELEMENT_CLASSNAME_COVERAGEPLAN_COMMON)
         ){
             path = structureDefinition.getType().getValue()+"."+elementName;
             for (ElementDefinition elementDefinition : structureDefinition.getSnapshot().getElement()) {
