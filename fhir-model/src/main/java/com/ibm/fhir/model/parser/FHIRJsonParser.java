@@ -7156,9 +7156,7 @@ public class FHIRJsonParser extends FHIRAbstractParser {
 
     private void parseDomainResource(DomainResource.Builder builder, JsonObject jsonObject) {
         parseResource(builder, jsonObject);
-        if (jsonObject.getString("name").equals("CoveragePlan")||jsonObject.getString("name").equals("FormularyDrug")){
-            System.out.println("came");
-        }else{
+        if (!jsonObject.getString("name").equals("CoveragePlan")&&!jsonObject.getString("name").equals("FormularyDrug")){
             builder.text(parseNarrative("text", getJsonValue(jsonObject, "text", JsonObject.class), -1));
         }
 //        builder.text(parseNarrative("text", getJsonValue(jsonObject, "text", JsonObject.class), -1));

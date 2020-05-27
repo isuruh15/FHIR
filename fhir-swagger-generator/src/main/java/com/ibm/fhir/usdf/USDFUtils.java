@@ -24,15 +24,16 @@ public class USDFUtils {
                     extensionsDir + "/" + type)).collect(Collectors.toList());
 
             result.forEach(f -> {
-//                objectMap.putAll(CodeGenerator.buildResourceMap(f, type));
                 try {
-                    //element in the index 4 has the class name (u)
+                    //element in the index 4 has the class name (u) running the class from IDE
+                    // for jar, index is 9
+                    //these are depends on extensionsDir
                     FHIROpenApiGenerator.populateStructureDefinitionMap(objectMap,f.split("/")[9]);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
-            System.out.println("Loading Completed");
+            System.out.println("**************** Loading Completed");
 
         } catch (IOException e) {
 //            log.error("Failed to load extensions from "+ extensionsDir, e);

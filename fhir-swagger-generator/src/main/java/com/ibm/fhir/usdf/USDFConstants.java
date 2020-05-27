@@ -1,8 +1,9 @@
 package com.ibm.fhir.usdf;
 
 public class USDFConstants {
+    public static final String BASE_PATH = "/home/isurus/prime_fhir/FHIR";
 //    public static final String EXTENSIONS_PATH = "src/main/resources/extensions";
-    public static final String EXTENSIONS_PATH = "/home/isurus/prime_fhir/FHIR/fhir-swagger-generator/target/classes/extensions";
+    public static final String EXTENSIONS_PATH = BASE_PATH + "/fhir-swagger-generator/target/classes/extensions";
 
     //additional constants
     public static final String NESTED_ELEMENT_CLASSNAME_COVERAGEPLAN_ENTRY = "com.ibm.fhir.model.resource.CoveragePlan$Entry";
